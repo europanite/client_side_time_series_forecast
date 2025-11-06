@@ -1,14 +1,14 @@
 services:
-  vite:
+  frontend:
     build:
-      context: ./vite
+      context: ./frontend
       dockerfile: Dockerfile
-    container_name: vite
+    container_name: frontend
     working_dir: /app
     stdin_open: true
     tty: true
     volumes:
-      - ./vite/app:/app
+      - ./frontend/app:/app
       - /app/node_modules
     ports:
       - "5173:5173"  # Vite
