@@ -96,3 +96,18 @@ button:focus-visible {
   }
 }
 
+/* Chart area sizing (stop vertical overgrowth) */
+#chartWrap {
+  position: relative;
+  height: 420px;        
+  max-height: 70vh; 
+  margin: 16px auto 0;
+  background: #111;
+  border-radius: 8px;
+}
+
+#chart {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}

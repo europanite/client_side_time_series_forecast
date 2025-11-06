@@ -1,8 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from "vite";
+
 export default defineConfig({
-  base: '/client_side_xgboost/',
+  base: "/client_side_xgboost/",
+  assetsInclude: ["**/*.wasm"], 
+  optimizeDeps: {
+    include: ["ml-xgboost"], 
+  },
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     emptyOutDir: true,
+    commonjsOptions: { transformMixedEsModules: true },
   },
 });
