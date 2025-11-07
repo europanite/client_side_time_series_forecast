@@ -1,6 +1,6 @@
-# [Client Side XGBoost](https://github.com/europanite/client_side_xgboost "Client Side XGBoost")
+# [Client Side Time-Series Forecast](https://github.com/europanite/client_side_time_series_forecast "Client Side Time-Series Forecast")
 
-[![pages](https://github.com/europanite/client_side_xgboost/actions/workflows/pages.yml/badge.svg)](https://github.com/europanite/client_side_xgboost/actions/workflows/pages.yml)
+[![pages](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml)
 
 Client Side Browser-Based XGBoost Time-Series Forecast. 
 
@@ -9,7 +9,7 @@ Client Side Browser-Based XGBoost Time-Series Forecast.
 ---
 
 ##  🚀 PlayGround
- [Client Side XGBoost](https://europanite.github.io/client_side_xgboost/)
+ [Client Side Time-Series Forecast](https://europanite.github.io/client_side_time_series_forecast/)
 
 ---
 

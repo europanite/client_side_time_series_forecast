@@ -103,7 +103,7 @@ export default function App() {
           marginBottom: 16,
         }}
       >
-        Time-Series Forecast
+        Client Side Time-Series Forecast
       </Text>
 
       {/* File input (web via react-native-web) */}
