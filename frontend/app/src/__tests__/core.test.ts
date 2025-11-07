@@ -88,22 +88,22 @@ describe("trainModel & predictNext", () => {
     mockedBuildFeatures.mockReturnValue(fakeFeatures);
 
     class FakeXGBoost {
-      public trainedX: number[][] | null = null;
-      public trainedY: number[] | null = null;
-      constructor(public config: any) {}
-      train(X: number[][], y: number[]): void {
-        this.trainedX = X;
-        this.trainedY = y;
-      }
-      predict(rowsIn: number[][]): number[] {
-        // deterministic: mean of y
-        const mean =
-          (this.trainedY ?? []).reduce((s, v) => s + v, 0) /
-          (this.trainedY ?? []).length;
-        return rowsIn.map(() => mean);
-      }
+    public config: any;
+    public trainedOn: { X: number[][]; y: number[] } | null = null;
+
+    constructor(config: any) {
+        this.config = config;
     }
 
+    train(X: number[][], y: number[]) {
+        this.trainedOn = { X, y };
+    }
+
+    predict(rows: number[][]): number[] {
+        return rows.map((r) => r.length);
+    }
+    }
+    
     mockedInitXGBoostCtor.mockResolvedValueOnce(FakeXGBoost as any);
 
     const data: LoadedData = {

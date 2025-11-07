@@ -1,7 +1,10 @@
-const WASM_URL = new URL(
-  `${import.meta.env.BASE_URL}vendor/ml-xgboost/xgboost.wasm`,
-  self.location.href
-).toString();
+const WASM_URL = (() => {
+  if (typeof window !== "undefined" && window.location) {
+    const base = window.location.pathname.replace(/\/[^/]*$/, "/");
+    return `${base}vendor/ml-xgboost/xgboost.wasm`;
+  }
+  return "vendor/ml-xgboost/xgboost.wasm";
+})();
 
 async function fetchWasmBinary(url: string): Promise<ArrayBuffer> {
   const u = new URL(url);

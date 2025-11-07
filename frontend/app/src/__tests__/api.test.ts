@@ -66,10 +66,12 @@ describe("buildFeatures", () => {
 
 jest.mock("xlsx", () => {
   return {
-    read: (buf: Uint8Array) => ({
+    read: (_buf: Uint8Array) => ({
       SheetNames: ["Sheet1"],
       Sheets: {
-        Sheet1: {},
+        Sheet1: {
+          "!ref": "A1:B3",
+        },
       },
     }),
     utils: {
