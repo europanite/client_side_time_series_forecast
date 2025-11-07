@@ -59,10 +59,30 @@ async function initXGBoostCtor(): Promise<
     );
   }
 
-  const wasmResponse = new Response(buf, {
-    status: 200,
-    headers: { "Content-Type": "application/wasm" },
-  });
+  const wasmResponse: any =
+    typeof Response !== "undefined"
+      ? new Response(buf, {
+          status: 200,
+          headers: { "Content-Type": "application/wasm" },
+        })
+      : {
+          ok: true,
+          status: 200,
+          headers: {
+            get(name: string) {
+              return name.toLowerCase() === "content-type"
+                ? "application/wasm"
+                : null;
+            },
+          },
+          async arrayBuffer() {
+            return buf;
+          },
+          clone() {
+            // good enough for our usage in tests
+            return this;
+          },
+        };
 
   (globalThis as any).fetch = (input: any, init?: any) => {
     const url = typeof input === "string" ? input : input?.url;
