@@ -1,5 +1,7 @@
 # [Client Side Time-Series Forecast](https://github.com/europanite/client_side_time_series_forecast "Client Side Time-Series Forecast")
 
+[![CI](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml)
+[![docker](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml)
 [![pages](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml)
 
 A Client Side Browser-Based XGBoost Time-Series Forecast Playground.
