@@ -110,17 +110,6 @@ export default function App() {
         alignItems: "center",
       }}
     >
-      <Text
-        style={{
-          fontSize: 28,
-          fontWeight: "600",
-          color: "#e5e7eb",
-          marginBottom: 16,
-        }}
-      >
-        Client Side Time-Series Forecast
-      </Text>
-
       {/* GitHub link (Pressable + window.open, no Linking / TouchableOpacity) */}
       <Pressable
         onPress={() =>
@@ -136,7 +125,7 @@ export default function App() {
             textDecorationLine: "underline",
           }}
         >
-          DET Vocabulary Practice
+          Client Side Time-Series Forecast
         </Text>
       </Pressable>
 
