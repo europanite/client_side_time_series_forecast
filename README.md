@@ -4,14 +4,11 @@
 [![docker](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml)
 [![pages](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml)
 
-A Client Side Browser-Based XGBoost Time-Series Forecast Playground.
-
 !["web_ui"](./assets/images/web_ui.png)
 
----
+[PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-##  🚀 PlayGround
- [Client Side Time-Series Forecast](https://europanite.github.io/client_side_time_series_forecast/)
+A Client-Side Browser-Based XGBoost Time-Series Forecast Playground.
 
 ---
 
