@@ -123,10 +123,15 @@ export function buildFeatures(
     // by reusing the last observed index.
     const baseIndex = isFuture ? n - 1 : t;
 
-    // 1) Exogenous series: current value + lags + diff + rolling mean
+    // --- 1) all exogenous current ---
     for (const key of featureKeys) {
       const cur = getValue(key, baseIndex);
-      feats.push(cur); // contemporaneous value
+      feats.push(cur);
+    }
+
+    // --- 2) Lag・diff・rolling mean ---
+    for (const key of featureKeys) {
+      const cur = getValue(key, baseIndex);
 
       // Lags up to MAX_LAG
       for (let lag = 1; lag <= MAX_LAG; lag += 1) {
@@ -139,20 +144,6 @@ export function buildFeatures(
 
       // Rolling mean (window = ROLLING_WINDOW)
       feats.push(rollingMean(key, baseIndex));
-    }
-
-    // 2) Target series history: lags + diff + rolling mean
-    if (targetKey && seriesMap[targetKey]) {
-      const curT = getValue(targetKey, baseIndex);
-
-      for (let lag = 1; lag <= MAX_LAG; lag += 1) {
-        feats.push(getValue(targetKey, baseIndex - lag));
-      }
-
-      const prevT = getValue(targetKey, baseIndex - 1);
-      feats.push(curT - prevT);
-
-      feats.push(rollingMean(targetKey, baseIndex));
     }
 
     // 3) Cross-series interactions at "current" time
