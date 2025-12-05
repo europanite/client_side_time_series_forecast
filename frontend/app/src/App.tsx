@@ -127,7 +127,7 @@ export default function App() {
         >
           Client-Side Time-Series Forecast
         </Text>
-        <Text style={{ marginBottom: 16 }}>
+        <Text style={{ color: "#ffffffff", marginBottom: 16 }}>
           Upload a CSV or XLSX file, choose a numeric column as the target, and predict the next time step using XGBoost running entirely in your browser. Your data never leaves this page.
         </Text>
       </Pressable>
