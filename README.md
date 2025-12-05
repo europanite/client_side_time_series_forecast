@@ -10,6 +10,42 @@
 
 A Client-Side Browser-Based XGBoost Time-Series Forecast Playground.
 
+Upload a CSV/XLSX file, pick a numeric column as the target, and predict the next time step with
+
+---
+
+## Overview
+
+This repository demonstrates how to:
+
+- Load a **small multivariate time series** (CSV/XLSX) in the browser
+- Build a **rich feature matrix** on the client (lags, rolling means, interactions, time encodings)
+- Train an **XGBoost regression model** in WebAssembly
+- Predict the **next time step** of a chosen target series
+- Visualize the original series and forecast in a simple line chart
+
+Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
+
+Typical use cases:
+
+- Quickly prototyping forecasting ideas without setting up Python or cloud infra
+- Teaching basic ideas of feature-based time-series forecasting
+- Comparing simple feature-engineered XGBoost against more complex models
+
+---
+
+## Demo: Try It in 30 Seconds
+
+1. Open the GitHub Pages demo:  
+   https://europanite.github.io/client_side_time_series_forecast/
+2. Upload a sample file such as [`data/data.csv`](./data/data.csv) or [`data/data.xlsx`](./data/data.xlsx).
+3. The app will:
+   - Detect a **datetime-like column**
+   - List available numeric columns
+4. Choose one numeric column as the **target**.
+5. Click **Train** to build the model, then click **Forecast** to predict the **next point**.
+6. Inspect the chart to see the original series and the predicted future value.
+
 ---
 
 ## Data Structure
@@ -21,6 +57,18 @@ datetime,item_a,item_b,item_c,...
 2025-01-03 00:00:00+09:00,14,18,33,...
  ...
 </pre>
+
+### Requirements:
+
+##### One datetime-like column
+Column header contains "date" or "time" (case-insensitive).
+Used as the time axis but not converted directly to numeric features.
+
+##### One or more numeric columns
+These columns are used as the target and/or exogenous features.
+Currently the app focuses on univariate forecasting with exogenous variables:
+You pick one numeric column as the target.
+All other numeric columns are used as additional signals.
 
 ---
 
