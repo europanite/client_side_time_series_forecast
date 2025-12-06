@@ -8,16 +8,16 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Time-Series Forecast Playground powered by XGBoost.
+A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost.
 
 ---
 
 ## Overview
 
-This is a time series forecasting tool that runs entirely in your web browser.
+This is a multivariate　time series forecasting tool that runs entirely in your web browser.
 No installation, registration, or payment required. 
 Just access it with your browser and you're ready to go.
-It helps small and medium-sized businesses predict tomorrow's orders.
+It helps small businesses predict tomorrow's orders.
 
 This repository demonstrates how to:
 - Load a **multivariate time series data** (CSV/XLSX) in the browser
