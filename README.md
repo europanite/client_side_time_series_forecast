@@ -8,9 +8,7 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based XGBoost Time-Series Forecast Playground.
-
-Upload a CSV/XLSX file, pick a numeric column as the target, and predict the next time step with
+A Client-Side Browser-Based Time-Series Forecast Playground powered by XGBoost.
 
 ---
 
@@ -26,15 +24,9 @@ This repository demonstrates how to:
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
 
-Typical use cases:
-
-- Quickly prototyping forecasting ideas without setting up Python or cloud infra
-- Teaching basic ideas of feature-based time-series forecasting
-- Comparing simple feature-engineered XGBoost against more complex models
-
 ---
 
-## Demo: Try It in 30 Seconds
+## Demo
 
 1. Open the GitHub Pages demo:  
    https://europanite.github.io/client_side_time_series_forecast/
@@ -189,19 +181,13 @@ The final feature vector for each time step `t` is:
 
 ### Future-step feature vector (lastFeatureRow)
 The same feature-building logic is used to produce a feature vector for t + 1 (one-step-ahead prediction):
-
-Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
-
-For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
-
-Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
-
-Time encodings use t_next as the time index.
-
-This gives a single feature vector lastFeatureRow that represents the next time step based on all history up to the last observation.
+- Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
+- For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
+- Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
+- Time encodings use t_next as the time index.
+- This gives a single feature vector lastFeatureRow that represents the next time step based on all history up to the last observation.
 
 The buildFeatures function therefore returns:
-
 ```text
 {
   X: number[][];        // feature matrix for all observed steps
