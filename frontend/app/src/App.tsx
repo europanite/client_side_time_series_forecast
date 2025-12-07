@@ -110,7 +110,6 @@ export default function App() {
         alignItems: "center",
       }}
     >
-      {/* GitHub link (Pressable + window.open, no Linking / TouchableOpacity) */}
       <Pressable
         onPress={() =>
           window.open(REPO_URL, "_blank", "noopener,noreferrer")
@@ -128,7 +127,7 @@ export default function App() {
           Client-Side Time-Series Forecast
         </Text>
         <Text style={{ color: "#ffffffff", marginBottom: 16 }}>
-          A browser-based multivariate time series forecasting tool. No installation, registration, or payment required. Just access it with your browser and you're ready to go.
+          A browser-based multivariate time series forecasting tool. No installation, registration, or payment required.
         </Text>
       </Pressable>
 
