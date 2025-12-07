@@ -1,26 +1,13 @@
-# Virtual env
-.venv/
-env/
-venv/
-ENV/
+# Environment config
+.env
+*.env
 
-# Node / React Native (Expo)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.expo/
-.expo-shared/
-web-build/
-dist/
-build/
-
-# macOS / Linux / Windows
+# OS-generated files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE
+# IDE / editor
 .vscode/
 .idea/
 *.swp
@@ -37,5 +24,16 @@ frontend/app/coverage/
 # Jest cache
 frontend/app/.jest-cache/
 
-# mat
-mat/
+# Node / Vite frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite build artifacts
+dist/
+dist-ssr/
+build/
+frontend/app/dist/
+
