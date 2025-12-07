@@ -110,7 +110,6 @@ export default function App() {
         alignItems: "center",
       }}
     >
-      {/* GitHub link (Pressable + window.open, no Linking / TouchableOpacity) */}
       <Pressable
         onPress={() =>
           window.open(REPO_URL, "_blank", "noopener,noreferrer")
