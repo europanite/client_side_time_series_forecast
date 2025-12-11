@@ -34,7 +34,7 @@ Everything happens **inside your browser**. There is no backend API and no data 
 
 1. Open the GitHub Pages demo:  
    https://europanite.github.io/client_side_time_series_forecast/
-2. Upload a sample file such as [`data/data.csv`](./data/data.csv) or [`data/data.xlsx`](./data/data.xlsx).
+2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_dataa.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
 3. The app will:
    - Detect a **datetime-like column**
    - List available numeric columns
