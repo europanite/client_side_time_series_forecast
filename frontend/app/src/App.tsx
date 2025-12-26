@@ -127,7 +127,7 @@ export default function App() {
           Client-Side Time-Series Forecast
         </Text>
         <Text style={{ color: "#ffffffff", marginBottom: 16 }}>
-          A browser-based multivariate time series forecasting tool. No installation, registration, or payment required.
+          A browser-based multivariate time series forecasting tool. No installation, No registration, or No payment is required.
         </Text>
       </Pressable>
 
