@@ -25,6 +25,8 @@ jobs:
       - name: Install deps
         working-directory: ./frontend/app
         run: npm i
+      - name: cp data
+        run: cp data/sample_data.csv frontend/app/public/sample_data.csv
       - name: Build
         working-directory: ./frontend/app
         run: npm run build:demo
