@@ -58,7 +58,7 @@ export default function App() {
         setTarget(guessTarget(loaded));
         setModel(null);
         setForecast("");
-        setStatus("sample data loaded");
+        setStatus("data loaded");
       } catch (err: any) {
         if (cancelled) return;
         setStatus(`error: ${err.message || String(err)}`);
