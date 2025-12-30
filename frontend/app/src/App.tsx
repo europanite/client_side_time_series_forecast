@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,41 @@ export default function App() {
   const [target, setTarget] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [forecast, setForecast] = useState<string>("");
+
+
+  // Load sample data at startup (so the app starts with data already loaded)
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      setStatus("loading sample data ...");
+      try {
+        // Vite base is "/client_side_time_series_forecast/" on GitHub Pages
+        const url = `${import.meta.env.BASE_URL}sample_data.csv`;
+        const resp = await fetch(url, { cache: "no-store" });
+        if (!resp.ok) {
+          throw new Error(`failed to fetch sample_data.csv (${resp.status})`);
+        }
+
+        const text = await resp.text();
+        const loaded = await loadFromCSV(text);
+
+        if (cancelled) return;
+        setData(loaded);
+        setTarget(guessTarget(loaded));
+        setModel(null);
+        setForecast("");
+        setStatus("sample data loaded");
+      } catch (err: any) {
+        if (cancelled) return;
+        setStatus(`error: ${err.message || String(err)}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>
