@@ -287,12 +287,13 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 
 #### csv: data/air_passengers.csv
 | This Work | seasonal-naive | 
-| train_size: 120 | 120 | 
-| test_size: 24 | 24 | 
-| MAE: 43.6495 | 47.5833 | 
-| RMSE: 50.8508 | 49.9867 | 
-| MAPE: 9.5665% | 10.5227% | 
-| sMAPE: 9.5943% | 11.1666% | 
+| -------- | -------- |
+| train_size | 120 | 120 | 
+| test_size | 24 | 24 | 
+| MAE | 43.6495 | 47.5833 | 
+| RMSE | 50.8508 | 49.9867 | 
+| MAPE | 9.5665% | 10.5227% | 
+| sMAPE | 9.5943% | 11.1666% | 
 
 ---
 
