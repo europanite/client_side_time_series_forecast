@@ -10,7 +10,6 @@ import {
   loadFromCSV,
   loadFromXLSX,
   trainModel,
-  predictNext,
   forecastNextN,
 } from "./core";
 import { Line } from "react-chartjs-2";
@@ -40,16 +39,8 @@ type ForecastPoint = {
   value: number;
 };
 
-function parseDateLike(value: unknown): Date | null {
-  if (value instanceof Date && Number.isFinite(value.getTime())) {
-    return value;
-  }
-  if (typeof value !== "string" && typeof value !== "number") {
-    return null;
-  }
-  const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed : null;
-}
+type LineDataset = ChartData<"line">["datasets"][number];
+
 
 export default function App() {
   const [status, setStatus] = useState("idle");
@@ -149,128 +140,6 @@ export default function App() {
     } catch (err: any) {
       setStatus(`error: ${err.message || String(err)}`);
     }
-  }
-
-  async function predictFuturePoints(
-    baseData: LoadedData,
-    selectedTarget: string,
-    initialModel: any,
-    steps: number
-  ): Promise<ForecastPoint[]> {
-    const numericKeys = baseData.headers.filter((header) => {
-      if (header === baseData.datetimeKey) return false;
-      return baseData.rows.some((row) => Number.isFinite(Number(row[header])));
-    });
-
-    if (!numericKeys.includes(selectedTarget)) {
-      throw new Error(`Target column is not numeric: ${selectedTarget}`);
-    }
-
-    const workingRows = baseData.rows.map((row) => ({ ...row }));
-    const points: ForecastPoint[] = [];
-
-    for (let step = 0; step < steps; step += 1) {
-      const workingData: LoadedData = {
-        ...baseData,
-        rows: workingRows,
-      };
-      const previousRow = workingRows[workingRows.length - 1] ?? {};
-      const nextRow: Record<string, any> = { ...previousRow };
-
-      if (baseData.datetimeKey) {
-        nextRow[baseData.datetimeKey] = buildFutureLabel(
-          workingRows,
-          baseData.datetimeKey,
-          step + 1
-        );
-      }
-
-      for (const key of numericKeys) {
-        const keyModel =
-          key === selectedTarget
-            ? initialModel
-            : await trainModel(workingData, key);
-        const predicted = Number(predictNext(workingData, key, keyModel));
-
-        nextRow[key] = Number.isFinite(predicted)
-          ? predicted
-          : Number(previousRow[key] ?? 0);
-      }
-
-      workingRows.push(nextRow);
-      points.push({
-        label: baseData.datetimeKey
-          ? String(nextRow[baseData.datetimeKey])
-          : String(baseData.rows.length + step),
-        value: Number(nextRow[selectedTarget]),
-      });
-    }
-
-    return points;
-  }
-
-  function buildFutureLabel(
-    rows: Record<string, any>[],
-    datetimeKey: string,
-    fallbackStep: number
-  ): string {
-    const lastRaw = rows[rows.length - 1]?.[datetimeKey];
-    const prevRaw = rows[rows.length - 2]?.[datetimeKey];
-    const lastDate = parseDateLike(lastRaw);
-    const prevDate = parseDateLike(prevRaw);
-
-    if (lastDate) {
-      const next = new Date(lastDate.getTime());
-      const lastText = String(lastRaw ?? "");
-
-      if (/^\d{4}-\d{2}$/.test(lastText)) {
-        next.setMonth(next.getMonth() + 1);
-        return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
-      }
-
-      if (prevDate) {
-        const delta = lastDate.getTime() - prevDate.getTime();
-        if (Number.isFinite(delta) && delta > 0) {
-          next.setTime(lastDate.getTime() + delta);
-          return formatDateLike(next, lastText);
-        }
-      }
-
-      next.setDate(next.getDate() + 1);
-      return formatDateLike(next, lastText);
-    }
-
-    return String(rows.length + fallbackStep);
-  }
-
-  function parseDateLike(value: unknown): Date | null {
-    if (value instanceof Date && Number.isFinite(value.getTime())) {
-      return value;
-    }
-
-    if (typeof value === "number" && Number.isFinite(value)) {
-      const excelEpoch = Date.UTC(1899, 11, 30);
-      return new Date(excelEpoch + value * 24 * 60 * 60 * 1000);
-    }
-
-    const text = String(value ?? "").trim();
-    if (!text) return null;
-
-    const normalized = text.replace(" ", "T");
-    const parsed = new Date(normalized);
-    return Number.isFinite(parsed.getTime()) ? parsed : null;
-  }
-
-  function formatDateLike(date: Date, originalText: string): string {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-
-    if (/^\d{4}-\d{2}$/.test(originalText)) {
-      return `${yyyy}-${mm}`;
-    }
-
-    return `${yyyy}-${mm}-${dd}`;
   }
 
   async function handlePredict(): Promise<void> {
@@ -481,106 +350,6 @@ export default function App() {
   );
 }
 
-async function predictFuturePoints(
-  data: LoadedData,
-  targetKey: string,
-  model: any,
-  steps: number
-): Promise<ForecastPoint[]> {
-  const workingRows = data.rows.map((row) => ({ ...row }));
-  const points: ForecastPoint[] = [];
-
-  for (let i = 0; i < steps; i += 1) {
-    const workingData: LoadedData = {
-      ...data,
-      rows: workingRows,
-    };
-
-    const rawPrediction = await Promise.resolve(
-      predictNext(workingData, targetKey, model)
-    );
-    const yhat = Number(rawPrediction);
-
-    if (!Number.isFinite(yhat)) {
-      throw new Error(`Prediction for step ${i + 1} is not finite.`);
-    }
-
-    const label = buildFutureLabel(data, workingRows.length, i + 1);
-    points.push({ label, value: yhat });
-
-    workingRows.push(buildFutureRow(data, workingRows, targetKey, label, yhat));
-  }
-
-  return points;
-}
-
-function buildFutureRow(
-  data: LoadedData,
-  workingRows: any[],
-  targetKey: string,
-  label: string,
-  yhat: number
-): Record<string, any> {
-  const previous = workingRows[workingRows.length - 1] ?? {};
-  const row: Record<string, any> = {};
-
-  for (const header of data.headers) {
-    if (header === data.datetimeKey) {
-      row[header] = label;
-    } else if (header === targetKey) {
-      row[header] = yhat;
-    } else {
-      row[header] = previous[header];
-    }
-  }
-
-  return row;
-}
-
-function buildFutureLabel(
-  data: LoadedData,
-  nextIndex: number,
-  step: number
-): string {
-  if (!data.datetimeKey || data.rows.length < 1) {
-    return `+${step}`;
-  }
-
-  const labels = data.rows.map((row) =>
-    String(row[data.datetimeKey as string] ?? "")
-  );
-  const lastLabel = labels[labels.length - 1];
-  if (/^\d{4}-\d{2}$/.test(lastLabel)) {
-    const [year, month] = lastLabel.split("-").map(Number);
-    const futureMonthIndex = year * 12 + (month - 1) + step;
-    const futureYear = Math.floor(futureMonthIndex / 12);
-    const futureMonth = (futureMonthIndex % 12) + 1;
-    return `${futureYear}-${String(futureMonth).padStart(2, "0")}`;
-  }
-
-  const lastDate = Date.parse(lastLabel);
-
-  if (!Number.isFinite(lastDate)) {
-    return `+${step}`;
-  }
-
-  const previousLabel = labels[labels.length - 2];
-  const previousDate =
-    previousLabel === undefined ? NaN : Date.parse(previousLabel);
-  const stepMs = Number.isFinite(previousDate)
-    ? lastDate - previousDate
-    : 24 * 60 * 60 * 1000;
-
-  const safeStepMs = stepMs > 0 ? stepMs : 24 * 60 * 60 * 1000;
-  const futureDate = new Date(lastDate + safeStepMs * step);
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(lastLabel)) {
-    return futureDate.toISOString().slice(0, 10);
-  }
-
-  return String(nextIndex);
-}
-
 
 function buildChartData(
   data: LoadedData | null,
@@ -624,7 +393,7 @@ function buildChartData(
       ? palette[numericKeys.indexOf(target) % palette.length]
       : palette[0];
 
-  const datasets = numericKeys.map((k, i) => ({
+  const datasets: LineDataset[] = numericKeys.map((k, i) => ({
     label: k,
     data: [
       ...data.rows.map((r) => Number(r[k])),
@@ -637,7 +406,7 @@ function buildChartData(
     tension: 0.25,
   }));
 
-  const chartDatasets = [...datasets];
+  const chartDatasets: LineDataset[] = [...datasets];
 
   if (target && forecastPoints.length > 0) {
     chartDatasets.push({
