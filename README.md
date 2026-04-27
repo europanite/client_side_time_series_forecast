@@ -284,13 +284,15 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 ```
 
 AirPassengers xgboost benchmark
+
 csv: data/air_passengers.csv
-train_size: 120
-test_size: 24
-MAE: 43.6495
-RMSE: 50.8508
-MAPE: 9.5665%
-sMAPE: 9.5943%
+
+- train_size: 120
+- test_size: 24
+- MAE: 43.6495
+- RMSE: 50.8508
+- MAPE: 9.5665%
+s- MAPE: 9.5943%
 
 ---
 
