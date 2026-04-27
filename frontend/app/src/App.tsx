@@ -6,7 +6,12 @@ import {
   ScrollView,
 } from "react-native-web";
 import type { LoadedData } from "./core";
-import { loadFromCSV, loadFromXLSX, trainModel, predictNext } from "./core";
+import {
+  loadFromCSV,
+  loadFromXLSX,
+  trainModel,
+  forecastNextN,
+} from "./core";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -28,12 +33,62 @@ ChartJS.register(
   Tooltip
 );
 
+
+type ForecastPoint = {
+  label: string;
+  value: number;
+};
+
+type LineDataset = ChartData<"line">["datasets"][number];
+
+
 export default function App() {
   const [status, setStatus] = useState("idle");
   const [data, setData] = useState<LoadedData | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [forecast, setForecast] = useState<string>("");
+  const [forecastPoints, setForecastPoints] = useState<ForecastPoint[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSampleData(): Promise<void> {
+      setStatus("loading sample data ...");
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.BASE_URL}sample_data.csv`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error(`failed to load sample_data.csv (${response.status})`);
+        }
+
+        const text = await response.text();
+        const loaded = await loadFromCSV(text);
+
+        if (cancelled) return;
+
+        setData(loaded);
+        setTarget(guessTarget(loaded));
+        setModel(null);
+        setForecast("");
+        setForecastPoints([]);
+        setStatus("sample data loaded");
+      } catch (err: any) {
+        if (cancelled) return;
+        setStatus(`error: ${err.message || String(err)}`);
+      }
+    }
+
+    void loadSampleData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
 
   // Load sample data at startup (so the app starts with data already loaded)
@@ -98,6 +153,7 @@ export default function App() {
 
       setModel(null);
       setForecast("");
+      setForecastPoints([]);
     } catch (err: any) {
       setStatus(`error: ${err.message || String(err)}`);
     }
@@ -113,26 +169,39 @@ export default function App() {
     try {
       const booster = await trainModel(data, target);
       setModel(booster);
+      setForecast("");
+      setForecastPoints([]);
       setStatus("trained");
     } catch (err: any) {
       setStatus(`error: ${err.message || String(err)}`);
     }
   }
 
-  function handlePredict(): void {
+  async function handlePredict(): Promise<void> {
     if (!data || !target || !model) return;
 
-    const yhat = predictNext(data, target, model);
+    setStatus("predicting 10 steps ...");
 
-    setForecast(
-      Number.isFinite(yhat)
-        ? `Target="${target}" → next(+1) forecast: ${Number(yhat).toFixed(4)}`
-        : String(yhat)
-    );
-    setStatus("predicted");
+    try {
+      const points = forecastNextN(data, target, model, 10);
+      setForecastPoints(points);
+
+      setForecast(
+        [
+          `Target="${target}" → next 10 forecasts:`,
+          ...points.map(
+            (point, index) =>
+              `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`
+          ),
+        ].join("\n")
+      );
+      setStatus("predicted 10 steps");
+    } catch (err: any) {
+      setStatus(`error: ${err.message || String(err)}`);
+    }
   }
 
-  const chart = buildChartData(data);
+  const chart = buildChartData(data, target, forecastPoints);
   const REPO_URL =
     "https://github.com/europanite/client_side_time_series_forecast";
 
@@ -210,7 +279,12 @@ export default function App() {
         <Text style={{ color: "#9ca3af" }}>Target:</Text>
         <select
           value={target ?? ""}
-          onChange={(e) => setTarget(e.target.value || null)}
+          onChange={(e) => {
+            setTarget(e.target.value || null);
+            setModel(null);
+            setForecast("");
+            setForecastPoints([]);
+          }}
           style={{
             padding: 8,
             borderRadius: 8,
@@ -255,7 +329,7 @@ export default function App() {
           }}
         >
           <Text style={{ color: "#020817", fontWeight: "600" }}>
-            Predict +1
+            Forecast +10
           </Text>
         </Pressable>
       </View>
@@ -310,17 +384,25 @@ export default function App() {
   );
 }
 
+
 function buildChartData(
-  data: LoadedData | null
+  data: LoadedData | null,
+  target: string | null,
+  forecastPoints: ForecastPoint[]
 ): { data: ChartData<"line">; options: ChartOptions<"line"> } | null {
   if (!data || !data.rows.length) return null;
 
   const useDatetime =
     !!data.datetimeKey && data.headers.includes(data.datetimeKey);
 
-  const labels: string[] = useDatetime
+  const observedLabels: string[] = useDatetime
     ? data.rows.map((r) => String(r[data.datetimeKey as string] ?? ""))
     : data.rows.map((_, i) => String(i)); // unify as string
+
+  const labels = [
+    ...observedLabels,
+    ...forecastPoints.map((point) => point.label),
+  ];
 
   const numericKeys = data.headers.filter((h) => {
     if (h === data.datetimeKey) return false;
@@ -340,9 +422,17 @@ function buildChartData(
     "#14b8a6",
   ];
 
-  const datasets = numericKeys.map((k, i) => ({
+  const targetSeriesColor =
+    target && numericKeys.includes(target)
+      ? palette[numericKeys.indexOf(target) % palette.length]
+      : palette[0];
+
+  const datasets: LineDataset[] = numericKeys.map((k, i) => ({
     label: k,
-    data: data.rows.map((r) => Number(r[k])),
+    data: [
+      ...data.rows.map((r) => Number(r[k])),
+      ...forecastPoints.map(() => null),
+    ],
     borderColor: palette[i % palette.length],
     backgroundColor: palette[i % palette.length],
     borderWidth: 2,
@@ -350,10 +440,28 @@ function buildChartData(
     tension: 0.25,
   }));
 
+  const chartDatasets: LineDataset[] = [...datasets];
+
+  if (target && forecastPoints.length > 0) {
+    chartDatasets.push({
+      label: `${target} forecast`,
+      data: [
+        ...data.rows.map(() => null),
+        ...forecastPoints.map((point) => point.value),
+      ],
+      borderColor: targetSeriesColor,
+      backgroundColor: targetSeriesColor,
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 3,
+      tension: 0.25,
+    });
+  }
+
   return {
     data: {
       labels,
-      datasets,
+      datasets: chartDatasets,
     },
     options: {
       responsive: true,
