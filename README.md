@@ -14,9 +14,9 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost.
+A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA-style baseline.
 
-The app loads a CSV or XLSX file, detects datetime and numeric columns, trains an XGBoost regression model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
+The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
 
 ---
 
@@ -29,7 +29,8 @@ It helps small businesses predict tomorrow's orders.
 
 - Load CSV/XLSX time-series datasets in the browser
 - Select any numeric column as the forecast target
-- Train an XGBoost model locally using WebAssembly
+- Choose between the default XGBoost model and an experimental VARMA-style baseline
+- Train the selected model locally in the browser
 - Forecast the next 10 points and append them to the chart
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
@@ -45,8 +46,9 @@ Everything happens **inside your browser**. There is no backend API and no data 
    - Detect a **datetime-like column**
    - List available numeric columns
 4. Choose one numeric column as the **target**.
-5. Click **Train** to build the model, then click **Forecast** to predict the **next point**.
-6. Inspect the chart to see the original series and the predicted future value.
+5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
+6. Click **Train** to build the selected model, then click **Forecast +10** to predict the next 10 points.
+7. Inspect the chart to compare the observed series and the forecast line.
 
 ---
 
@@ -68,15 +70,16 @@ Used as the time axis but not converted directly to numeric features.
 
 ##### One or more numeric columns
 These columns are used as the target and/or exogenous features.
-Currently the app focuses on univariate forecasting with exogenous variables:
-You pick one numeric column as the target.
-All other numeric columns are used as additional signals.
+The app supports two forecasting modes:
+
+- **XGBoost**: you pick one numeric column as the target, and other numeric columns are used as additional signals.
+- **VARMA experimental**: all numeric columns are modeled together, and the selected target column is displayed as the forecast output.
 
 ---
 
 ## Forecasting Approach
 
-The project uses feature-based time-series forecasting.
+The project provides two browser-side forecasting approaches: the default XGBoost model and an experimental VARMA-style baseline.
 
 For each row, the app builds a feature vector from:
 
@@ -89,11 +92,25 @@ For each row, the app builds a feature vector from:
 
 The selected target column is used as the prediction label. The model learns how the next value relates to the recent behavior of the target and other numeric series.
 
+### Model selection
+
+#### XGBoost
+
+`XGBoost` is the default model. It is a feature-based regression model that uses lag values, rolling statistics, cross-series interactions, and time features. Use this model when you want the strongest general-purpose forecast from multivariate tabular time-series data.
+
+#### VARMA experimental
+
+`VARMA experimental` is a lightweight VARMA-style multivariate baseline implemented in TypeScript. It forecasts numeric series together and displays the selected target series.
+
+This implementation is intentionally experimental. It is not a full maximum-likelihood VARMA implementation. It currently behaves as a VAR-style autoregressive model with residual and seasonal stabilization, so it should be used as a comparison baseline rather than a replacement for XGBoost.
+
+Use `VARMA experimental` when you want to compare XGBoost against a classical multivariate time-series style model, especially when multiple numeric series move together.
+
 ### 10-step forecast
 
 The UI forecasts 10 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
 
-For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value.
+For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value. In XGBoost mode, the selected target is forecast directly while non-target context is extended. In VARMA experimental mode, all numeric series are advanced together and the selected target series is shown in the chart and forecast text.
 
 ---
 
