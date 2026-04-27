@@ -297,7 +297,7 @@ The benchmark reports common forecast metrics:
 
 ### Bench Mark:
 ```bash
-docker compose -f docker-compose.test.yml run --rm frontend_test npm test -- --runInBand
+docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
 ```
 
 ---
