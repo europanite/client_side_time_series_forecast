@@ -6,7 +6,7 @@ import {
   seasonalNaivePredictor,
 } from "../benchmark";
 
-const AIR_PASSENGERS_CSV = `Month,Passengers
+const AIR_PASSENGERS_CSV = `Date,Passengers
 1949-01,112
 1949-02,118
 1949-03,132

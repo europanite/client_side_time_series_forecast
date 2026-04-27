@@ -27,7 +27,7 @@ export type OneStepPredictor = (history: NumericPoint[], step: number) => number
 
 export function parseNumericSeriesCSV(
   csvText: string,
-  dateKey = "Month",
+  dateKey = "Date",
   valueKey = "Passengers"
 ): NumericPoint[] {
   const trimmed = csvText.trim();

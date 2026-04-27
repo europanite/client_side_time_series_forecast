@@ -48,7 +48,7 @@ Options:
 `);
 }
 
-function parseNumericSeriesCSV(csvText, dateKey = "Month", valueKey = "Passengers") {
+function parseNumericSeriesCSV(csvText, dateKey = "Date", valueKey = "Passengers") {
   const trimmed = csvText.trim();
   if (!trimmed) return [];
 
@@ -72,11 +72,11 @@ function parseNumericSeriesCSV(csvText, dateKey = "Month", valueKey = "Passenger
 
 function toLoadedRows(series) {
   return {
-    headers: ["Month", "Passengers"],
-    datetimeKey: "Month",
+    headers: ["Date", "Passengers"],
+    datetimeKey: "Date",
     targetKey: "Passengers",
     rows: series.map((point) => ({
-      Month: point.date,
+      Date: point.date,
       Passengers: String(point.value),
     })),
   };
