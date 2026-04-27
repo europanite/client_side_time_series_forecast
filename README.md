@@ -297,12 +297,5 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 
 ---
 
-### Bench Mark:
-```bash
-docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
-```
-
----
-
 # License
 - Apache License 2.0
