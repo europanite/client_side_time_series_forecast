@@ -5,13 +5,14 @@ import {
   Pressable,
   ScrollView,
 } from "react-native-web";
-import type { LoadedData } from "./core";
+import type { ForecastPoint, LoadedData } from "./core";
 import {
   loadFromCSV,
   loadFromXLSX,
   trainModel,
   forecastNextN,
 } from "./core";
+import { forecastVarmaNextN, trainVarmaModel } from "./varma";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -34,18 +35,15 @@ ChartJS.register(
 );
 
 
-type ForecastPoint = {
-  label: string;
-  value: number;
-};
-
 type LineDataset = ChartData<"line">["datasets"][number];
+type ModelKind = "xgboost" | "varma";
 
 
 export default function App() {
   const [status, setStatus] = useState("idle");
   const [data, setData] = useState<LoadedData | null>(null);
   const [target, setTarget] = useState<string | null>(null);
+  const [modelKind, setModelKind] = useState<ModelKind>("xgboost");
   const [model, setModel] = useState<any>(null);
   const [forecast, setForecast] = useState<string>("");
   const [forecastPoints, setForecastPoints] = useState<ForecastPoint[]>([]);
@@ -167,11 +165,14 @@ export default function App() {
     if (!data || !target) return;
     setStatus("training ...");
     try {
-      const booster = await trainModel(data, target);
-      setModel(booster);
+      const trainedModel =
+        modelKind === "varma"
+          ? trainVarmaModel(data)
+          : await trainModel(data, target);
+      setModel(trainedModel);
       setForecast("");
       setForecastPoints([]);
-      setStatus("trained");
+      setStatus(`${modelKind} trained`);
     } catch (err: any) {
       setStatus(`error: ${err.message || String(err)}`);
     }
@@ -183,12 +184,15 @@ export default function App() {
     setStatus("predicting 10 steps ...");
 
     try {
-      const points = forecastNextN(data, target, model, 10);
+      const points =
+        modelKind === "varma"
+          ? forecastVarmaNextN(data, target, model, 10)
+          : forecastNextN(data, target, model, 10);
       setForecastPoints(points);
 
       setForecast(
         [
-          `Target="${target}" → next 10 forecasts:`,
+          `Model="${modelKind}" Target="${target}" → next 10 forecasts:`,
           ...points.map(
             (point, index) =>
               `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`
@@ -302,6 +306,28 @@ export default function App() {
                 {h}
               </option>
             ))}
+        </select>
+
+        <Text style={{ color: "#9ca3af" }}>Model:</Text>
+        <select
+          value={modelKind}
+          onChange={(e) => {
+            setModelKind(e.target.value as ModelKind);
+            setModel(null);
+            setForecast("");
+            setForecastPoints([]);
+          }}
+          style={{
+            padding: 8,
+            borderRadius: 8,
+            border: "1px solid #4b5563",
+            background: "#111827",
+            color: "#e5e7eb",
+            minWidth: 170,
+          }}
+        >
+          <option value="xgboost">XGBoost</option>
+          <option value="varma">VARMA experimental</option>
         </select>
 
         <Pressable
