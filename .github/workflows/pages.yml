@@ -3,6 +3,8 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 permissions:
   contents: read
   pages: write
@@ -23,6 +25,8 @@ jobs:
       - name: Install deps
         working-directory: ./frontend/app
         run: npm i
+      - name: cp data
+        run: cp data/sample_data.csv frontend/app/public/sample_data.csv
       - name: Build
         working-directory: ./frontend/app
         run: npm run build:demo

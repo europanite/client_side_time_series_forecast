@@ -1,14 +1,20 @@
 # [Client-Side Time-Series Forecast](https://github.com/europanite/client_side_time_series_forecast "Client-Side Time-Series Forecast")
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![OS](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-blue)
 [![CI](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml)
 [![docker](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/docker.yml)
 [![pages](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/pages.yml)
+
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 
 !["web_ui"](./assets/images/web_ui.png)
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A browser-based time-series forecasting playground that runs XGBoost entirely on the client side.
+A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost.
 
 The app loads a CSV or XLSX file, detects datetime and numeric columns, trains an XGBoost regression model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
 
@@ -16,7 +22,10 @@ The app loads a CSV or XLSX file, detects datetime and numeric columns, trains a
 
 ## Overview
 
-This repository demonstrates how to:
+This is a multivariate time series forecasting tool that runs entirely in your web browser.
+No installation, registration, or payment required. 
+Just access it with your browser and you're ready to go.
+It helps small businesses predict tomorrow's orders.
 
 - Load CSV/XLSX time-series datasets in the browser
 - Select any numeric column as the forecast target
@@ -25,19 +34,13 @@ This repository demonstrates how to:
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
 
-Typical use cases:
-
-- Quickly prototyping forecasting ideas without setting up Python or cloud infra
-- Teaching basic ideas of feature-based time-series forecasting
-- Comparing simple feature-engineered XGBoost against more complex models
-
 ---
 
-## Demo: Try It in 30 Seconds
+## Demo
 
 1. Open the GitHub Pages demo:  
    https://europanite.github.io/client_side_time_series_forecast/
-2. Upload a sample file such as [`data/data.csv`](./data/data.csv) or [`data/data.xlsx`](./data/data.xlsx).
+2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_dataa.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
 3. The app will:
    - Detect a **datetime-like column**
    - List available numeric columns
@@ -211,19 +214,13 @@ The final feature vector for each time step `t` is:
 
 ### Future-step feature vector (lastFeatureRow)
 The same feature-building logic is used to produce a feature vector for t + 1 (one-step-ahead prediction):
-
-Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
-
-For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
-
-Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
-
-Time encodings use t_next as the time index.
-
-This gives a single feature vector lastFeatureRow that represents the next time step based on all history up to the last observation.
+- Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
+- For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
+- Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
+- Time encodings use t_next as the time index.
+- This gives a single feature vector lastFeatureRow that represents the next time step based on all history up to the last observation.
 
 The buildFeatures function therefore returns:
-
 ```text
 {
   X: number[][];        // feature matrix for all observed steps

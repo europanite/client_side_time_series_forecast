@@ -1,42 +1,13 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg
-*.egg-info/
-.eggs/
-*.log
-*.sqlite3
-db.sqlite3
+# Environment config
+.env
+*.env
 
-# Virtual env
-.venv/
-env/
-venv/
-ENV/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Node / React Native (Expo)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.expo/
-.expo-shared/
-web-build/
-dist/
-build/
-
-# macOS / Linux / Windows
+# OS-generated files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE
+# IDE / editor
 .vscode/
 .idea/
 *.swp
@@ -46,16 +17,23 @@ desktop.ini
 *.sock
 *.tar
 
-# coverage reports (backend & frontend)
+# coverage reports
 coverage/
-backend/app/coverage/
 frontend/app/coverage/
 
 # Jest cache
 frontend/app/.jest-cache/
 
-# mat
-mat/
+# Node / Vite frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
+# Vite build artifacts
+dist/
+dist-ssr/
+build/
+frontend/app/dist/
 
-client_side_*

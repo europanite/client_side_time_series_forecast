@@ -2,12 +2,6 @@
 .git
 .gitignore
 
-# Python cache
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
 # Node
 node_modules/
 npm-debug.log*
@@ -30,5 +24,3 @@ desktop.ini
 dist/
 build/
 web-build/
-.expo/
-.expo-shared/

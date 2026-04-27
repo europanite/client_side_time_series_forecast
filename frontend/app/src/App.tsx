@@ -90,6 +90,41 @@ export default function App() {
     };
   }, []);
 
+
+  // Load sample data at startup (so the app starts with data already loaded)
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      setStatus("loading sample data ...");
+      try {
+        // Vite base is "/client_side_time_series_forecast/" on GitHub Pages
+        const url = `${import.meta.env.BASE_URL}sample_data.csv`;
+        const resp = await fetch(url, { cache: "no-store" });
+        if (!resp.ok) {
+          throw new Error(`failed to fetch sample_data.csv (${resp.status})`);
+        }
+
+        const text = await resp.text();
+        const loaded = await loadFromCSV(text);
+
+        if (cancelled) return;
+        setData(loaded);
+        setTarget(guessTarget(loaded));
+        setModel(null);
+        setForecast("");
+        setStatus("data loaded");
+      } catch (err: any) {
+        if (cancelled) return;
+        setStatus(`error: ${err.message || String(err)}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> {
@@ -179,7 +214,6 @@ export default function App() {
         alignItems: "center",
       }}
     >
-      {/* GitHub link (Pressable + window.open, no Linking / TouchableOpacity) */}
       <Pressable
         onPress={() =>
           window.open(REPO_URL, "_blank", "noopener,noreferrer")
@@ -197,7 +231,7 @@ export default function App() {
           Client-Side Time-Series Forecast
         </Text>
         <Text style={{ color: "#ffffffff", marginBottom: 16 }}>
-          Upload a CSV or XLSX file, choose a numeric column as the target, and predict the next time step using XGBoost running entirely in your browser. Your data never leaves this page.
+          A browser-based multivariate time series forecasting tool. No installation, No registration, or No payment is required.
         </Text>
       </Pressable>
 
