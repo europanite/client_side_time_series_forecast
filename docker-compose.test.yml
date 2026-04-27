@@ -11,3 +11,16 @@ services:
       - ./reports/frontend:/reports/frontend
     command: >-
       sh -lc "npm ci && npm test -- --ci --runInBand --verbose"
+
+  air_passengers_benchmark:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: air_passengers_benchmark
+    working_dir: /repo
+    environment:
+      NODE_PATH: /app/node_modules
+    volumes:
+      - ./:/repo
+      - /repo/frontend/app/node_modules
+    command: >-

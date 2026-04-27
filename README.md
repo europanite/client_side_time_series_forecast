@@ -8,9 +8,9 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based XGBoost Time-Series Forecast Playground.
+A browser-based time-series forecasting playground that runs XGBoost entirely on the client side.
 
-Upload a CSV/XLSX file, pick a numeric column as the target, and predict the next time step with
+The app loads a CSV or XLSX file, detects datetime and numeric columns, trains an XGBoost regression model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
 
 ---
 
@@ -18,11 +18,10 @@ Upload a CSV/XLSX file, pick a numeric column as the target, and predict the nex
 
 This repository demonstrates how to:
 
-- Load a **small multivariate time series** (CSV/XLSX) in the browser
-- Build a **rich feature matrix** on the client (lags, rolling means, interactions, time encodings)
-- Train an **XGBoost regression model** in WebAssembly
-- Predict the **next time step** of a chosen target series
-- Visualize the original series and forecast in a simple line chart
+- Load CSV/XLSX time-series datasets in the browser
+- Select any numeric column as the forecast target
+- Train an XGBoost model locally using WebAssembly
+- Forecast the next 10 points and append them to the chart
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
 
@@ -69,6 +68,29 @@ These columns are used as the target and/or exogenous features.
 Currently the app focuses on univariate forecasting with exogenous variables:
 You pick one numeric column as the target.
 All other numeric columns are used as additional signals.
+
+---
+
+## Forecasting Approach
+
+The project uses feature-based time-series forecasting.
+
+For each row, the app builds a feature vector from:
+
+- recent lag values
+- local differences
+- rolling means
+- cross-series interactions
+- time index
+- Fourier-style cyclical features
+
+The selected target column is used as the prediction label. The model learns how the next value relates to the recent behavior of the target and other numeric series.
+
+### 10-step forecast
+
+The UI forecasts 10 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
+
+For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value.
 
 ---
 
@@ -210,6 +232,9 @@ The buildFeatures function therefore returns:
 }
 ```
 
+---
+
+
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
@@ -233,6 +258,46 @@ docker compose \
 -f docker-compose.test.yml up \
 --build --exit-code-from \
 frontend_test
+```
+
+---
+
+## AirPassengers Benchmark
+
+The repository includes an AirPassengers dataset and a benchmark command for checking model behavior against a classic monthly time-series dataset.
+
+Run the benchmark with Docker Compose:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
+```
+
+JSON output:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
+  node scripts/benchmark-air-passengers.mjs --json
+```
+
+Seasonal naive baseline:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
+  node scripts/benchmark-air-passengers.mjs --algorithm seasonal-naive --json
+```
+
+The benchmark reports common forecast metrics:
+
+- MAE
+- RMSE
+- MAPE
+- sMAPE
+
+---
+
+### Bench Mark:
+```bash
+docker compose -f docker-compose.test.yml run --rm frontend_test npm test -- --runInBand
 ```
 
 ---
