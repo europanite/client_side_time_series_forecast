@@ -13,14 +13,15 @@ services:
       sh -lc "npm ci && npm test -- --ci --runInBand --verbose"
 
   air_passengers_benchmark:
+    profiles:
+      - benchmark
     build:
       context: ./frontend
       dockerfile: Dockerfile.test
     container_name: air_passengers_benchmark
     working_dir: /repo
-    environment:
-      NODE_PATH: /app/node_modules
     volumes:
       - ./:/repo
       - /repo/frontend/app/node_modules
     command: >-
+      sh -lc "npm --prefix frontend/app ci && node scripts/benchmark-air-passengers.mjs"
