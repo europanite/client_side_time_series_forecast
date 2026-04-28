@@ -10,11 +10,25 @@
 ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 
+
+<p align="right">
+  <a href="./README.md">🇺🇸 English</a> |
+  <a href="./README.hi.md">🇮🇳 हिंदी </a> |
+  <a href="./README.ja.md">🇯🇵 日本語</a> |
+  <a href="./README.zh-CN.md">🇨🇳 简体中文</a> |
+  <a href="./README.es.md">🇪🇸 Español</a> |
+  <a href="./README.pt-BR.md">🇧🇷 Português (Brasil)</a> |
+  <a href="./README.ko.md">🇰🇷 한국어</a> |
+  <a href="./README.de.md">🇩🇪 Deutsch</a> |
+  <a href="./README.fr.md">🇫🇷 Français</a>
+</p>
+
+
 !["web_ui"](./assets/images/web_ui.png)
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA-style baseline.
+A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA.
 
 The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
 
@@ -29,7 +43,7 @@ It helps small businesses predict tomorrow's orders.
 
 - Load CSV/XLSX time-series datasets in the browser
 - Select any numeric column as the forecast target
-- Choose between the default XGBoost model and an experimental VARMA-style baseline
+- Choose between the default XGBoost model and an experimental VARMA
 - Train the selected model locally in the browser
 - Forecast the next 10 points and append them to the chart
 
