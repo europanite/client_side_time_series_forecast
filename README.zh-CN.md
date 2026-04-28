@@ -1,5 +1,3 @@
-# [Client-Side Time-Series Forecast](https://github.com/europanite/client_side_time_series_forecast "Client-Side Time-Series Forecast")
-
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![OS](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-blue)
 [![CI](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml/badge.svg)](https://github.com/europanite/client_side_time_series_forecast/actions/workflows/ci.yml)
@@ -28,45 +26,45 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA.
+一个完全在客户端浏览器中运行的多变量时间序列预测 Playground，由 XGBoost 和实验性的 VARMA 风格基线模型驱动。
 
-The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
-
----
-
-## Overview
-
-This is a multivariate time series forecasting tool that runs entirely in your web browser.
-No installation, registration, or payment required. 
-Just access it with your browser and you're ready to go.
-It helps small businesses predict tomorrow's orders.
-
-- Load CSV/XLSX time-series datasets in the browser
-- Select any numeric column as the forecast target
-- Choose between the default XGBoost model and an experimental VARMA
-- Train the selected model locally in the browser
-- Forecast the next 10 points and append them to the chart
-
-Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
+该应用会加载 CSV 或 XLSX 文件，检测日期时间列和数值列，让你选择预测模型，并同时可视化观测值与未来 10 步预测。你的数据始终保留在浏览器中。
 
 ---
 
-## Demo
+## 概述
 
-1. Open the GitHub Pages demo:  
+这是一个完全在 Web 浏览器中运行的多变量时间序列预测工具。
+无需安装、注册或付费。
+用浏览器打开即可开始使用。
+它可以帮助小型企业预测明天的订单量。
+
+- 在浏览器中加载 CSV/XLSX 时间序列数据集
+- 选择任意数值列作为预测目标
+- 在默认 XGBoost 模型和实验性 VARMA 风格基线之间切换
+- 在浏览器本地训练所选模型
+- 预测接下来的 10 个点并追加到图表中
+
+所有处理都发生在 **你的浏览器内部**。没有后端 API，也不会有数据离开你的机器。
+
+---
+
+## 演示
+
+1. 打开 GitHub Pages 演示：  
    https://europanite.github.io/client_side_time_series_forecast/
-2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_dataa.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
-3. The app will:
-   - Detect a **datetime-like column**
-   - List available numeric columns
-4. Choose one numeric column as the **target**.
-5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
-6. Click **Train** to build the selected model, then click **Forecast +10** to predict the next 10 points.
-7. Inspect the chart to compare the observed series and the forecast line.
+2. 上传示例文件，例如 [`data/sample_data.csv`](./data/datsample_dataa.csv) 或 [`data/sample_data.xlsx`](./data/sample_data.xlsx)。
+3. 应用会：
+   - 检测 **datetime-like column**
+   - 列出可用的数值列
+4. 选择一个数值列作为 **target**。
+5. 选择一个 **forecast model**。`XGBoost` 是默认值。`VARMA experimental` 是用于比较的轻量级多变量基线。
+6. 点击 **Train** 构建所选模型，然后点击 **Forecast +10** 预测接下来的 10 个点。
+7. 查看图表，比较观测序列和预测线。
 
 ---
 
-## Data Structure
+## 数据结构
 
 <pre>
 datetime,item_a,item_b,item_c,...
@@ -76,87 +74,85 @@ datetime,item_a,item_b,item_c,...
  ...
 </pre>
 
-### Requirements:
+### 要求：
 
-##### One datetime-like column
-Column header contains "date" or "time" (case-insensitive).
-Used as the time axis but not converted directly to numeric features.
+##### Una columna similar a fecha/hora
+列标题包含 “date” 或 “time”（不区分大小写）。它用作时间轴，但不会直接转换为数值特征。
 
-##### One or more numeric columns
-These columns are used as the target and/or exogenous features.
-The app supports two forecasting modes:
+##### Una o más columnas numéricas
+这些列用作目标和/或外生特征。应用支持两种预测模式：
 
-- **XGBoost**: you pick one numeric column as the target, and other numeric columns are used as additional signals.
-- **VARMA experimental**: all numeric columns are modeled together, and the selected target column is displayed as the forecast output.
+- **XGBoost**：选择一个数值列作为目标，其它数值列作为额外信号。
+- **VARMA experimental**：所有数值列一起建模，并将所选目标列显示为预测输出。
 
 ---
 
-## Forecasting Approach
+## 预测方法
 
-The project provides two browser-side forecasting approaches: the default XGBoost model and an experimental VARMA-style baseline.
+本项目提供两种浏览器端预测方法：默认 XGBoost 模型和实验性 VARMA 风格基线。
 
-For each row, the app builds a feature vector from:
+对于每一行，应用会根据以下内容构建特征向量：
 
-- recent lag values
-- local differences
-- rolling means
-- cross-series interactions
-- time index
-- Fourier-style cyclical features
+- 最近的滞后值
+- 局部差分
+- 滚动均值
+- 序列间交互
+- 时间索引
+- Fourier 风格的周期特征
 
-The selected target column is used as the prediction label. The model learns how the next value relates to the recent behavior of the target and other numeric series.
+所选目标列用作预测标签。模型学习下一个值与目标列及其它数值序列近期行为之间的关系。
 
-### Model selection
+### 模型选择
 
 #### XGBoost
 
-`XGBoost` is the default model. It is a feature-based regression model that uses lag values, rolling statistics, cross-series interactions, and time features. Use this model when you want the strongest general-purpose forecast from multivariate tabular time-series data.
+`XGBoost` 是默认模型。它是一个基于特征的回归模型，使用滞后值、滚动统计、序列间交互和时间特征。当你希望从多变量表格型时间序列数据中获得最强的通用预测时，可以使用此模型。
 
 #### VARMA experimental
 
-`VARMA experimental` is a lightweight VARMA-style multivariate baseline implemented in TypeScript. It forecasts numeric series together and displays the selected target series.
+`VARMA experimental` 是一个用 TypeScript 实现的轻量级 VARMA 风格多变量基线。它会一起预测数值序列，并显示所选目标序列。
 
-This implementation is intentionally experimental. It is not a full maximum-likelihood VARMA implementation. It currently behaves as a VAR-style autoregressive model with residual and seasonal stabilization, so it should be used as a comparison baseline rather than a replacement for XGBoost.
+该实现有意保持实验性质。它不是完整的最大似然 VARMA 实现。目前它的行为更接近带残差和季节稳定化的 VAR 风格自回归模型，因此应作为与 XGBoost 比较的基线，而不是替代品。
 
-Use `VARMA experimental` when you want to compare XGBoost against a classical multivariate time-series style model, especially when multiple numeric series move together.
+当你想将 XGBoost 与经典多变量时间序列风格模型进行比较，尤其是多个数值序列一起变化时，可以使用 `VARMA experimental`。
 
-### 10-step forecast
+### 10步预测
 
-The UI forecasts 10 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
+UI 会预测未来 10 个点。每个未来步骤都会追加到工作历史中，因此后续步骤可以使用更早的预测值。
 
-For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value. In XGBoost mode, the selected target is forecast directly while non-target context is extended. In VARMA experimental mode, all numeric series are advanced together and the selected target series is shown in the chart and forecast text.
+对于多序列数据，应用还会推进数值上下文，使预测不会只是把每个非目标列固定在最后一个观测值。在 XGBoost 模式下，所选目标会被直接预测，同时扩展非目标上下文。在 VARMA experimental 模式下，所有数值序列一起推进，并在图表和预测文本中显示所选目标序列。
 
 ---
 
-## Feature Engineering
+## 特征工程
 
-This project treats the input as a small multi-variate time series:
+本项目将输入视为一个小型多变量时间序列：
 
-- One *datetime-like* column (header contains `date` or `time` in any case).
-- Several numeric columns (e.g., `item_a`, `item_b`, `item_c`, ...).
-- One of the numeric columns is chosen as the **target** to forecast.
+- 一个 *datetime-like* 列（表头包含 `date` 或 `time`）。
+- 多个数值列（例如 `item_a`, `item_b`, `item_c`, ...）。
+- 其中一个数值列被选为要预测的 **target**。
 
-Internally, the feature builder constructs a **rich feature vector** for each time step `t` and a **future feature vector** for `t + 1`. All features are computed **purely on the client**, in JavaScript/TypeScript.
+在内部，特征构建器会为每个时间步 `t` 构建 **rich feature vector**，并为 `t + 1` 构建 **future feature vector**。所有特征都在 JavaScript/TypeScript 中 **完全在客户端** 计算。
 
-### Series used for features
+### Series usadas para las características
 
 - `datetimeKey`  
-  - Detected automatically from the header that contains `"date"` or `"time"`.
-  - Only used for locating the time axis; not used directly as a numeric feature.
+  - Se detecta automáticamente a partir del encabezado que contiene `"date"` o `"time"`.
+  - Solo se usa para ubicar el eje temporal; no se usa directamente como característica numérica.
 - `targetKey`  
-  - Numeric column the user chooses to forecast.
+  - Columna numérica que el usuario elige pronosticar.
 - `featureKeys`  
-  - All other numeric columns (non-datetime, non-target).
-  - Treated as **exogenous series**.
+  - Todas las demás columnas numéricas (no datetime, no target).
+  - Se tratan como **series exógenas**.
 
-Internally we keep a `seriesMap: Record<string, number[]>` with one numeric array per series.
+Internamente mantenemos un `seriesMap: Record<string, number[]>` con un arreglo numérico por serie.
 
-### Per-series features (exogenous series)
+### Características por serie (series exógenas)
 
-For every exogenous series `x(t)` (each key in `featureKeys`) and each time step `t`, we compute:
+Para cada série exógena `x(t)` (cada chave em `featureKeys`) e cada passo de tempo `t`, calculamos:
 
 1. **Contemporaneous value**
-   - `x(t)` (the value at time index `t`).
+   - `x(t)`
 
 2. **Lag features (history)**
    - Up to `MAX_LAG = 3`:
@@ -171,14 +167,14 @@ For every exogenous series `x(t)` (each key in `featureKeys`) and each time step
 
 4. **Rolling mean (local average)**
    - Rolling window of `ROLLING_WINDOW = 7` time steps:
-     - `mean(x[t - 6 ... t])` (truncated near the beginning of the series)
+     - `mean(x[t - 6 ... t])`
    - Represents local trend / baseline level and smooths short-term noise.
 
 > If the series is shorter than the window, the code automatically shrinks the window so that all available past points up to `t` are used.
 
-### Target-series history
+### Historial de la serie objetivo
 
-For the **target series** `y(t)` itself, we do **not** include the current value `y(t)` as a feature (because it is the label at that step), but we do include its history:
+Para a própria **target series** `y(t)`, não incluímos o valor atual `y(t)` como feature, porque ele é o rótulo daquele passo, mas incluímos seu histórico:
 
 1. **Target lags**
    - `y(t - 1)`
@@ -194,9 +190,9 @@ For the **target series** `y(t)` itself, we do **not** include the current value
 
 This lets the model learn patterns like “the next value depends on the last few values and their local trend,” which is typical in time-series forecasting.
 
-### Cross-series interactions
+### Interacciones entre series
 
-To capture **relationships between different series**, we build interaction features for every **pair of numeric series** (including the target):
+Para capturar **relações entre diferentes séries**, criamos features de interação para cada **par de séries numéricas** (incluindo o alvo):
 
 - Let `v_i(t)` and `v_j(t)` be the contemporaneous values of two series at time `t`.
 - For each ordered pair `(i, j)` with `i < j`, we compute:
@@ -217,9 +213,9 @@ To capture **relationships between different series**, we build interaction feat
 
 These cross-series features explicitly expose **multi-series structure** to the booster instead of relying only on individual series values.
 
-### Time index and Fourier features
+### Índice temporal y características Fourier
 
-We also encode time itself as numeric features:
+Também codificamos o próprio tempo como features numéricas:
 
 1. **Time index**
    - Integer index `t = 0, 1, 2, ...` (row index).
@@ -243,8 +239,8 @@ The final feature vector for each time step `t` is:
   time index, sin/cos(2πt/24), sin/cos(2πt/168) ]
 ```
 
-### Future-step feature vector (lastFeatureRow)
-The same feature-building logic is used to produce a feature vector for t + 1 (one-step-ahead prediction):
+### Vector de características del paso futuro (lastFeatureRow)
+A mesma lógica de construção de features é usada para produzir um vetor para t + 1 (previsão de um passo à frente):
 - Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
 - For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
 - Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
@@ -263,12 +259,12 @@ The buildFeatures function therefore returns:
 ---
 
 
-## 🚀 Getting Started
+## 🚀 入门
 
-### 1. Prerequisites
+### 1. 前置条件
 - [Docker Compose](https://docs.docker.com/compose/)
 
-### 2. Build and start all services:
+### 2. 构建并启动所有服务：
 
 ```bash
 
@@ -290,11 +286,11 @@ frontend_test
 
 ---
 
-## AirPassengers Benchmark
+## AirPassengers 基准测试
 
-The repository includes an AirPassengers dataset and a benchmark command for checking model behavior against a classic monthly time-series dataset.
+仓库包含 AirPassengers 数据集和一个基准测试命令，用于检查模型在经典月度时间序列数据集上的行为。
 
-Run the benchmark with Docker Compose:
+使用 Docker Compose 运行基准测试：
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
