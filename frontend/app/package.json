@@ -20,6 +20,7 @@
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "ml-xgboost": "^1.1.2",
+    "onnxruntime-web": "^1.30.0",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",

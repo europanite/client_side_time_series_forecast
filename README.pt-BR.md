@@ -30,7 +30,7 @@
 
 Um playground de previsão de séries temporais multivariadas, baseado em navegador e executado no lado do cliente, alimentado por XGBoost e por uma baseline experimental no estilo VARMA.
 
-O app carrega um arquivo CSV ou XLSX, detecta colunas de data/hora e colunas numéricas, permite escolher um modelo de previsão e visualiza tanto os valores observados quanto uma previsão de 10 passos. Seus dados permanecem no navegador.
+O app carrega um arquivo CSV ou XLSX, detecta colunas de data/hora e colunas numéricas, permite escolher um modelo de previsão e visualiza tanto os valores observados quanto uma previsão de 16 passos. Seus dados permanecem no navegador.
 
 ---
 
@@ -45,7 +45,7 @@ Ela ajuda pequenos negócios a prever os pedidos de amanhã.
 - Selecionar qualquer coluna numérica como alvo da previsão
 - Escolher entre o modelo XGBoost padrão e uma baseline experimental no estilo VARMA
 - Treinar o modelo selecionado localmente no navegador
-- Prever os próximos 10 pontos e adicioná-los ao gráfico
+- Prever os próximos 16 pontos e adicioná-los ao gráfico
 
 Tudo acontece **dentro do seu navegador**. Não há API de backend e nenhum dado sai da sua máquina.
 
@@ -61,7 +61,7 @@ Tudo acontece **dentro do seu navegador**. Não há API de backend e nenhum dado
    - Listar as colunas numéricas disponíveis
 4. Escolha uma coluna numérica como **target**.
 5. Escolha um **forecast model**. `XGBoost` é o padrão. `VARMA experimental` é uma baseline multivariada leve para comparação.
-6. Clique em **Train** para construir o modelo selecionado e depois em **Forecast +10** para prever os próximos 10 pontos.
+6. Clique em **Train** para construir o modelo selecionado e depois em **Forecast +16** para prever os próximos 16 pontos.
 7. Inspecione o gráfico para comparar a série observada e a linha de previsão.
 
 ---
@@ -118,9 +118,9 @@ Esta implementação é intencionalmente experimental. Não é uma implementaç�
 
 Use `VARMA experimental` quando quiser comparar XGBoost com um modelo clássico multivariado de séries temporais, especialmente quando várias séries numéricas se movem juntas.
 
-### Previsão de 10 etapas
+### Previsão de 16 etapas
 
-A UI prevê 10 pontos futuros. Cada passo futuro é anexado ao histórico de trabalho para que passos posteriores possam usar valores previstos anteriormente.
+A UI prevê 16 pontos futuros. Cada passo futuro é anexado ao histórico de trabalho para que passos posteriores possam usar valores previstos anteriormente.
 
 Para dados com múltiplas séries, o app também avança o contexto numérico para que a previsão não apenas mantenha cada coluna não alvo fixa no último valor observado. No modo XGBoost, o alvo selecionado é previsto diretamente enquanto o contexto não alvo é estendido. No modo VARMA experimental, todas as séries numéricas avançam juntas e a série alvo selecionada aparece no gráfico e no texto da previsão.
 

@@ -30,7 +30,7 @@
 
 Ein clientseitiges, browserbasiertes Playground-Projekt für multivariate Zeitreihenprognosen, betrieben mit XGBoost und einer experimentellen VARMA-artigen Baseline.
 
-Die App lädt eine CSV- oder XLSX-Datei, erkennt Datums-/Zeitspalten und numerische Spalten, lässt dich ein Prognosemodell auswählen und visualisiert sowohl beobachtete Werte als auch eine 10-Schritt-Prognose. Deine Daten bleiben im Browser.
+Die App lädt eine CSV- oder XLSX-Datei, erkennt Datums-/Zeitspalten und numerische Spalten, lässt dich ein Prognosemodell auswählen und visualisiert sowohl beobachtete Werte als auch eine 16-Schritt-Prognose. Deine Daten bleiben im Browser.
 
 ---
 
@@ -45,7 +45,7 @@ Es hilft kleinen Unternehmen, die Bestellungen von morgen vorherzusagen.
 - Eine beliebige numerische Spalte als Prognoseziel auswählen
 - Zwischen dem Standardmodell XGBoost und einer experimentellen VARMA-artigen Baseline wählen
 - Das ausgewählte Modell lokal im Browser trainieren
-- Die nächsten 10 Punkte prognostizieren und an das Diagramm anhängen
+- Die nächsten 16 Punkte prognostizieren und an das Diagramm anhängen
 
 Alles geschieht **in deinem Browser**. Es gibt keine Backend-API und keine Daten verlassen deinen Rechner.
 
@@ -61,7 +61,7 @@ Alles geschieht **in deinem Browser**. Es gibt keine Backend-API und keine Daten
    - Verfügbare numerische Spalten auflisten
 4. Wähle eine numerische Spalte als **target**.
 5. Wähle ein **forecast model**. `XGBoost` ist der Standard. `VARMA experimental` ist eine leichte multivariate Baseline zum Vergleich.
-6. Klicke auf **Train**, um das ausgewählte Modell zu erstellen, und dann auf **Forecast +10**, um die nächsten 10 Punkte vorherzusagen.
+6. Klicke auf **Train**, um das ausgewählte Modell zu erstellen, und dann auf **Forecast +16**, um die nächsten 16 Punkte vorherzusagen.
 7. Prüfe das Diagramm, um die beobachtete Reihe mit der Prognoselinie zu vergleichen.
 
 ---
@@ -118,9 +118,9 @@ Diese Implementierung ist absichtlich experimentell. Sie ist keine vollständige
 
 Verwende `VARMA experimental`, wenn du XGBoost mit einem klassischen multivariaten Zeitreihenmodell vergleichen möchtest, besonders wenn mehrere numerische Reihen gemeinsam verlaufen.
 
-### 10-Schritt-Prognose
+### 16-Schritt-Prognose
 
-Die UI prognostiziert 10 zukünftige Punkte. Jeder zukünftige Schritt wird an die Arbeitshistorie angehängt, sodass spätere Schritte frühere Vorhersagewerte nutzen können.
+Die UI prognostiziert 16 zukünftige Punkte. Jeder zukünftige Schritt wird an die Arbeitshistorie angehängt, sodass spätere Schritte frühere Vorhersagewerte nutzen können.
 
 Bei Mehrreihendaten erweitert die App auch den numerischen Kontext, damit die Prognose nicht einfach jede Nicht-Ziel-Spalte auf dem letzten beobachteten Wert festhält. Im XGBoost-Modus wird das ausgewählte Ziel direkt prognostiziert, während der Nicht-Ziel-Kontext erweitert wird. Im VARMA-experimental-Modus werden alle numerischen Reihen gemeinsam fortgeschrieben und die ausgewählte Zielreihe im Diagramm und Prognosetext angezeigt.
 

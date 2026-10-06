@@ -30,7 +30,7 @@
 
 A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA.
 
-The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
+The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 16-step forecast. Your data stays in your browser.
 
 ---
 
@@ -45,7 +45,7 @@ It helps small businesses predict tomorrow's orders.
 - Select any numeric column as the forecast target
 - Choose between the default XGBoost model and an experimental VARMA
 - Train the selected model locally in the browser
-- Forecast the next 10 points and append them to the chart
+- Forecast the next 16 points and append them to the chart
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
 
@@ -61,7 +61,7 @@ Everything happens **inside your browser**. There is no backend API and no data 
    - List available numeric columns
 4. Choose one numeric column as the **target**.
 5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
-6. Click **Train** to build the selected model, then click **Forecast +10** to predict the next 10 points.
+6. Click **Train** to build the selected model, then click **Forecast +16** to predict the next 16 points.
 7. Inspect the chart to compare the observed series and the forecast line.
 
 ---
@@ -120,9 +120,9 @@ This implementation is intentionally experimental. It is not a full maximum-like
 
 Use `VARMA experimental` when you want to compare XGBoost against a classical multivariate time-series style model, especially when multiple numeric series move together.
 
-### 10-step forecast
+### 16-step forecast
 
-The UI forecasts 10 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
+The UI forecasts 16 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
 
 For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value. In XGBoost mode, the selected target is forecast directly while non-target context is extended. In VARMA experimental mode, all numeric series are advanced together and the selected target series is shown in the chart and forecast text.
 

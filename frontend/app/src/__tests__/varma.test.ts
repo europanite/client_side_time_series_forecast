@@ -1,5 +1,6 @@
 import { forecastVarmaNextN, trainVarmaModel } from "../varma";
 import type { LoadedData } from "../core";
+import { DEFAULT_FORECAST_HORIZON } from "../forecast-config";
 
 describe("VARMA experimental", () => {
   const data: LoadedData = {
@@ -21,6 +22,17 @@ describe("VARMA experimental", () => {
     expect(model.keys).toEqual(["sales", "ads", "price"]);
     expect(points).toHaveLength(3);
     expect(points[0].label).toBe("2026-01-13");
+    expect(points.every((point) => Number.isFinite(point.value))).toBe(true);
+  });
+
+  it("uses the shared 16-step horizon by default", () => {
+    const model = trainVarmaModel(data, { lag: 2, maLag: 1 });
+    const points = forecastVarmaNextN(data, "sales", model);
+
+    expect(DEFAULT_FORECAST_HORIZON).toBe(16);
+    expect(points).toHaveLength(DEFAULT_FORECAST_HORIZON);
+    expect(points[0].label).toBe("2026-01-13");
+    expect(points[points.length - 1].label).toBe("2026-01-28");
     expect(points.every((point) => Number.isFinite(point.value))).toBe(true);
   });
 

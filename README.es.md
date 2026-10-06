@@ -30,7 +30,7 @@
 
 Un playground de pronóstico de series temporales multivariadas, basado en el navegador y ejecutado del lado del cliente, impulsado por XGBoost y una línea base experimental de estilo VARMA.
 
-La aplicación carga un archivo CSV o XLSX, detecta columnas de fecha/hora y columnas numéricas, permite elegir un modelo de pronóstico y visualiza tanto los valores observados como un pronóstico de 10 pasos. Tus datos permanecen en tu navegador.
+La aplicación carga un archivo CSV o XLSX, detecta columnas de fecha/hora y columnas numéricas, permite elegir un modelo de pronóstico y visualiza tanto los valores observados como un pronóstico de 16 pasos. Tus datos permanecen en tu navegador.
 
 ---
 
@@ -45,7 +45,7 @@ Ayuda a pequeñas empresas a predecir los pedidos de mañana.
 - Seleccionar cualquier columna numérica como objetivo del pronóstico
 - Elegir entre el modelo XGBoost predeterminado y una línea base experimental de estilo VARMA
 - Entrenar localmente el modelo seleccionado en el navegador
-- Pronosticar los siguientes 10 puntos y agregarlos al gráfico
+- Pronosticar los siguientes 16 puntos y agregarlos al gráfico
 
 Todo ocurre **dentro de tu navegador**. No hay API de backend y ningún dato sale de tu máquina.
 
@@ -61,7 +61,7 @@ Todo ocurre **dentro de tu navegador**. No hay API de backend y ningún dato sal
    - List available numeric columns
 4. Choose one numeric column as the **target**.
 5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
-6. Click **Train** to build the selected model, then click **Forecast +10** to predict the next 10 points.
+6. Click **Train** to build the selected model, then click **Forecast +16** to predict the next 16 points.
 7. Inspect the chart to compare the observed series and the forecast line.
 
 ---
@@ -118,9 +118,9 @@ Esta implementación es intencionalmente experimental. No es una implementación
 
 Usa `VARMA experimental` cuando quieras comparar XGBoost con un modelo clásico multivariado de series temporales, especialmente cuando varias series numéricas se mueven juntas.
 
-### Pronóstico de 10 pasos
+### Pronóstico de 16 pasos
 
-La UI pronostica 10 puntos futuros. Cada paso futuro se agrega al historial de trabajo para que los pasos posteriores puedan usar valores predichos anteriormente.
+La UI pronostica 16 puntos futuros. Cada paso futuro se agrega al historial de trabajo para que los pasos posteriores puedan usar valores predichos anteriormente.
 
 Para datos multiserie, la aplicación también avanza el contexto numérico para que el pronóstico no mantenga simplemente cada columna no objetivo fija en el último valor observado. En modo XGBoost, el objetivo seleccionado se pronostica directamente mientras se extiende el contexto no objetivo. En modo VARMA experimental, todas las series numéricas avanzan juntas y la serie objetivo seleccionada se muestra en el gráfico y el texto del pronóstico.
 

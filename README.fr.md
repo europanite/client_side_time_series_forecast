@@ -30,7 +30,7 @@
 
 Un bac à sable de prévision de séries temporelles multivariées, côté client et basé sur le navigateur, propulsé par XGBoost et une base expérimentale de style VARMA.
 
-L'application charge un fichier CSV ou XLSX, détecte les colonnes de date/heure et les colonnes numériques, vous permet de choisir un modèle de prévision, puis visualise les valeurs observées ainsi qu'une prévision à 10 pas. Vos données restent dans votre navigateur.
+L'application charge un fichier CSV ou XLSX, détecte les colonnes de date/heure et les colonnes numériques, vous permet de choisir un modèle de prévision, puis visualise les valeurs observées ainsi qu'une prévision à 16 pas. Vos données restent dans votre navigateur.
 
 ---
 
@@ -45,7 +45,7 @@ Elle aide les petites entreprises à prévoir les commandes du lendemain.
 - Sélectionner n'importe quelle colonne numérique comme cible de prévision
 - Choisir entre le modèle XGBoost par défaut et une base expérimentale de style VARMA
 - Entraîner localement le modèle sélectionné dans le navigateur
-- Prévoir les 10 prochains points et les ajouter au graphique
+- Prévoir les 16 prochains points et les ajouter au graphique
 
 Tout se passe **dans votre navigateur**. Il n'y a pas d'API backend et aucune donnée ne quitte votre machine.
 
@@ -61,7 +61,7 @@ Tout se passe **dans votre navigateur**. Il n'y a pas d'API backend et aucune do
    - Lister les colonnes numériques disponibles
 4. Choisissez une colonne numérique comme **target**.
 5. Choisissez un **forecast model**. `XGBoost` est le choix par défaut. `VARMA experimental` est une base multivariée légère pour comparaison.
-6. Cliquez sur **Train** pour construire le modèle sélectionné, puis sur **Forecast +10** pour prédire les 10 prochains points.
+6. Cliquez sur **Train** pour construire le modèle sélectionné, puis sur **Forecast +16** pour prédire les 16 prochains points.
 7. Inspectez le graphique pour comparer la série observée et la ligne de prévision.
 
 ---
@@ -118,9 +118,9 @@ Cette implémentation est volontairement expérimentale. Ce n’est pas une impl
 
 Utilisez `VARMA experimental` pour comparer XGBoost à un modèle classique multivarié de séries temporelles, surtout lorsque plusieurs séries numériques évoluent ensemble.
 
-### Prévision en 10 étapes
+### Prévision en 16 étapes
 
-L’interface prévoit 10 points futurs. Chaque pas futur est ajouté à l’historique de travail afin que les pas suivants puissent utiliser les valeurs prédites précédemment.
+L’interface prévoit 16 points futurs. Chaque pas futur est ajouté à l’historique de travail afin que les pas suivants puissent utiliser les valeurs prédites précédemment.
 
 Pour les données multisé­ries, l’application avance aussi le contexte numérique afin que la prévision ne garde pas simplement chaque colonne non cible figée à sa dernière valeur observée. En mode XGBoost, la cible sélectionnée est prévue directement tandis que le contexte non cible est étendu. En mode VARMA experimental, toutes les séries numériques avancent ensemble et la série cible sélectionnée apparaît dans le graphique et le texte de prévision.
 

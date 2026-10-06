@@ -30,7 +30,7 @@
 
 XGBoost और एक experimental VARMA-style baseline द्वारा संचालित, क्लाइंट-साइड ब्राउज़र-आधारित multivariate time-series forecast playground.
 
-यह ऐप CSV या XLSX फ़ाइल लोड करता है, datetime और numeric columns पहचानता है, forecasting model चुनने देता है, और observed values तथा 10-step forecast दोनों को visualize करता है। आपका डेटा आपके browser में ही रहता है।
+यह ऐप CSV या XLSX फ़ाइल लोड करता है, datetime और numeric columns पहचानता है, forecasting model चुनने देता है, और observed values तथा 16-step forecast दोनों को visualize करता है। आपका डेटा आपके browser में ही रहता है।
 
 ---
 
@@ -45,7 +45,7 @@ Installation, registration या payment की आवश्यकता नह
 - किसी भी numeric column को forecast target के रूप में चुनें
 - Default XGBoost model और experimental VARMA-style baseline में से चुनें
 - चुने गए model को browser में locally train करें
-- अगले 10 points forecast करें और chart में जोड़ें
+- अगले 16 points forecast करें और chart में जोड़ें
 
 सारी प्रक्रिया **आपके browser के अंदर** होती है। कोई backend API नहीं है और कोई data आपकी machine से बाहर नहीं जाता।
 
@@ -61,7 +61,7 @@ Installation, registration या payment की आवश्यकता नह
    - उपलब्ध numeric columns दिखाएगा
 4. एक numeric column को **target** के रूप में चुनें।
 5. एक **forecast model** चुनें। `XGBoost` default है। `VARMA experimental` comparison के लिए lightweight multivariate baseline है।
-6. Selected model बनाने के लिए **Train** क्लिक करें, फिर अगले 10 points predict करने के लिए **Forecast +10** क्लिक करें।
+6. Selected model बनाने के लिए **Train** क्लिक करें, फिर अगले 16 points predict करने के लिए **Forecast +16** क्लिक करें।
 7. Observed series और forecast line की तुलना करने के लिए chart देखें।
 
 ---
@@ -118,9 +118,9 @@ datetime,item_a,item_b,item_c,...
 
 当你想将 XGBoost 与经典多变量时间序列风格模型进行比较，尤其是多个数值序列一起变化时，可以使用 `VARMA experimental`。
 
-### 10-स्टेप पूर्वानुमान
+### 16-स्टेप पूर्वानुमान
 
-UI 会预测未来 10 个点。每个未来步骤都会追加到工作历史中，因此后续步骤可以使用更早的预测值。
+UI 会预测未来 16 个点。每个未来步骤都会追加到工作历史中，因此后续步骤可以使用更早的预测值。
 
 对于多序列数据，应用还会推进数值上下文，使预测不会只是把每个非目标列固定在最后一个观测值。在 XGBoost 模式下，所选目标会被直接预测，同时扩展非目标上下文。在 VARMA experimental 模式下，所有数值序列一起推进，并在图表和预测文本中显示所选目标序列。
 
