@@ -13,6 +13,7 @@ import {
   forecastNextN,
 } from "./core";
 import { forecastVarmaNextN, trainVarmaModel } from "./varma";
+import { trainLightGBMModel } from "./lightgbm";
 import { forecastChronosNext16 } from "./chronos";
 import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
 import { Line } from "react-chartjs-2";
@@ -38,7 +39,7 @@ ChartJS.register(
 
 
 type LineDataset = ChartData<"line">["datasets"][number];
-type ModelKind = "xgboost" | "varma" | "chronos";
+type ModelKind = "xgboost" | "lightgbm" | "varma" | "chronos";
 
 
 export default function App() {
@@ -49,6 +50,14 @@ export default function App() {
   const [model, setModel] = useState<any>(null);
   const [forecast, setForecast] = useState<string>("");
   const [forecastPoints, setForecastPoints] = useState<ForecastPoint[]>([]);
+
+  useEffect(() => {
+    return () => {
+      if (model && typeof model.dispose === "function") {
+        model.dispose();
+      }
+    };
+  }, [model]);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,7 +185,9 @@ export default function App() {
       const trainedModel =
         modelKind === "varma"
           ? trainVarmaModel(data)
-          : await trainModel(data, target);
+          : modelKind === "lightgbm"
+            ? await trainLightGBMModel(data, target)
+            : await trainModel(data, target);
       setModel(trainedModel);
       setForecast("");
       setForecastPoints([]);
@@ -368,6 +379,7 @@ export default function App() {
           }}
         >
           <option value="xgboost">XGBoost</option>
+          <option value="lightgbm">LightGBM</option>
           <option value="varma">VARMA experimental</option>
           <option value="chronos">Chronos-2 pretrained</option>
         </select>
