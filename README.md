@@ -28,9 +28,9 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Multivariate Time-Series Forecast Playground powered by XGBoost and an experimental VARMA.
+A Client-Side Browser-Based Time-Series Forecast Playground powered by XGBoost, an experimental VARMA-style model, and Chronos-2.
 
-The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 10-step forecast. Your data stays in your browser.
+The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 16-step forecast. Your data stays in your browser.
 
 ---
 
@@ -43,9 +43,9 @@ It helps small businesses predict tomorrow's orders.
 
 - Load CSV/XLSX time-series datasets in the browser
 - Select any numeric column as the forecast target
-- Choose between the default XGBoost model and an experimental VARMA
+- Choose among XGBoost, an experimental VARMA-style model, and pretrained Chronos-2
 - Train the selected model locally in the browser
-- Forecast the next 10 points and append them to the chart
+- Forecast the next 16 points and append them to the chart
 
 Everything happens **inside your browser**. There is no backend API and no data leaves your machine.
 
@@ -60,8 +60,8 @@ Everything happens **inside your browser**. There is no backend API and no data 
    - Detect a **datetime-like column**
    - List available numeric columns
 4. Choose one numeric column as the **target**.
-5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
-6. Click **Train** to build the selected model, then click **Forecast +10** to predict the next 10 points.
+5. Choose a **forecast model**. `XGBoost` is the default, `VARMA experimental` is a lightweight multivariate baseline, and `Chronos-2 pretrained` is a zero-shot foundation model.
+6. For XGBoost or VARMA, click **Train** first. Chronos-2 is already pretrained and does not require local training. Then click **Forecast +16** to predict the next 16 points.
 7. Inspect the chart to compare the observed series and the forecast line.
 
 ---
@@ -93,44 +93,179 @@ The app supports two forecasting modes:
 
 ## Forecasting Approach
 
-The project provides two browser-side forecasting approaches: the default XGBoost model and an experimental VARMA-style baseline.
+The project exposes three forecasting algorithms with deliberately different
+assumptions:
 
-For each row, the app builds a feature vector from:
+| Model | Learning style | Uses multiple input series? | Local training? | Forecast style |
+| --- | --- | --- | --- | --- |
+| XGBoost | Gradient-boosted decision-tree regression over engineered time-series features | Yes | Yes | Recursive one-step forecasting |
+| VARMA experimental | Linear multi-output autoregression with ridge regularization, residual correction, and seasonal stabilization | Yes, jointly | Yes | Recursive multi-output forecasting |
+| Chronos-2-small INT8 ONNX | Pretrained patch-based time-series foundation model | Selected target only in the current UI | No | Direct probabilistic multi-step forecasting |
 
-- recent lag values
-- local differences
-- rolling means
-- cross-series interactions
-- time index
-- Fourier-style cyclical features
-
-The selected target column is used as the prediction label. The model learns how the next value relates to the recent behavior of the target and other numeric series.
+These models should not be interpreted as three implementations of the same
+algorithm. XGBoost converts the time series into a supervised tabular-learning
+problem, VARMA models lagged vectors of several series jointly, and Chronos-2
+uses a pretrained neural forecasting model without fitting new parameters to
+the uploaded dataset.
 
 ### Model selection
 
 #### XGBoost
 
-`XGBoost` is the default model. It is a feature-based regression model that uses lag values, rolling statistics, cross-series interactions, and time features. Use this model when you want the strongest general-purpose forecast from multivariate tabular time-series data.
+`XGBoost` is the default locally trained model. XGBoost is a gradient-boosted
+decision-tree algorithm: many decision trees are added sequentially, with each
+new tree reducing errors left by the previous ensemble. Time series are not
+passed to XGBoost directly. This project first converts each time step into a
+feature vector and then trains XGBoost as a regression model.
+
+The browser implementation uses:
+
+- target and exogenous lags up to `MAX_LAG = 3`
+- first differences
+- a `ROLLING_WINDOW = 7` rolling mean
+- spread, ratio, and product interactions between numeric series
+- a time index
+- Fourier features with periods 24 and 168
+- `gbtree` with depth 4, learning rate 0.1, subsample 0.8, and 200 boosting iterations
+
+For a 16-step forecast, the model predicts one step at a time. Each prediction
+is appended to the working history and is therefore available to the next
+step. The raw XGBoost prediction is also blended with a seasonal continuation
+estimate. Non-target numeric context is advanced rather than being held
+constant.
+
+**Strengths**
+
+- captures nonlinear relationships and interactions between series
+- works naturally with the project's hand-engineered multivariate features
+- trains locally and relatively quickly in the browser
+- does not require a large pretrained model download
+
+**Limitations**
+
+- forecasting quality depends on the chosen feature engineering
+- recursive forecasting can accumulate errors over later steps
+- the fixed Fourier periods and seasonal continuation are application-level
+  assumptions rather than automatically learned calendar structure
+
+Use XGBoost when you want a lightweight, locally trained nonlinear model that
+can exploit relationships among several numeric columns.
 
 #### VARMA experimental
 
-`VARMA experimental` is a lightweight VARMA-style multivariate baseline implemented in TypeScript. It forecasts numeric series together and displays the selected target series.
+`VARMA experimental` is a lightweight browser-native multivariate baseline.
+Despite the name, this implementation is **not a full statistical
+maximum-likelihood VARMA estimator**. It is closer to a regularized VAR-style
+model with a small residual correction and explicit seasonal stabilization.
 
-This implementation is intentionally experimental. It is not a full maximum-likelihood VARMA implementation. It currently behaves as a VAR-style autoregressive model with residual and seasonal stabilization, so it should be used as a comparison baseline rather than a replacement for XGBoost.
+The implementation:
 
-Use `VARMA experimental` when you want to compare XGBoost against a classical multivariate time-series style model, especially when multiple numeric series move together.
+1. selects up to 8 numeric series and standardizes them;
+2. concatenates the previous 7 multivariate vectors into a lag feature vector;
+3. fits all output series simultaneously with multi-output ridge regression
+   (`ridge = 1e-2`);
+4. estimates a small correction from recent residuals (`maLag = 1`);
+5. during forecasting, blends the autoregressive output with the vector from
+   the seasonal lag (`seasonalLag = 7`, `seasonalBlend = 0.55`);
+6. recursively feeds the predicted vector back into the next forecast step.
 
-### 10-step forecast
+Because the complete numeric vector is predicted at each step, VARMA advances
+all modeled series together rather than forecasting only the selected target.
 
-The UI forecasts 10 future points. Each future step is appended to the working history so later steps can use earlier predicted values.
+**Strengths**
 
-For multi-series data, the app also advances numeric context so the forecast does not simply hold every non-target column fixed at the last observed value. In XGBoost mode, the selected target is forecast directly while non-target context is extended. In VARMA experimental mode, all numeric series are advanced together and the selected target series is shown in the chart and forecast text.
+- simple and computationally inexpensive
+- models several numeric series jointly
+- provides a useful linear/classical-style baseline against XGBoost and
+  Chronos-2
+- runs entirely in TypeScript without a separate model download
+
+**Limitations**
+
+- requires at least two numeric series and more than 7 usable rows
+- assumes mostly linear lag relationships
+- the residual correction and seasonal blending are pragmatic stabilizers,
+  not a complete moving-average estimation procedure
+- should not be presented as a reference implementation of statistical VARMA
+
+Use `VARMA experimental` mainly as a transparent multivariate baseline when
+several series move together.
+
+#### Chronos-2 pretrained
+
+`Chronos-2 pretrained` is fundamentally different from the two locally fitted
+models above. Chronos-2 is a pretrained, patch-based time-series foundation
+model that produces direct multi-step **quantile forecasts**. This repository
+runs `Chronos-2-small INT8` as an ONNX model with ONNX Runtime Web, so inference
+is performed locally after the model has been downloaded.
+
+The current browser integration:
+
+- does **not** train on the uploaded dataset;
+- uses only the selected target series as Chronos context;
+- requires at least 16 numeric target observations;
+- keeps at most 5,760 context observations;
+- groups the input into 16-point patches, left-padding an incomplete first
+  patch with `NaN`;
+- runs the ONNX graph's internal 672-step output
+  (`42 × 16`) and exposes the first 16 steps to the UI;
+- reads the model's quantile output and displays the median (`p50`) forecast
+  together with `p10` and `p90` uncertainty bounds.
+
+Chronos-2 itself supports richer multivariate and covariate-informed
+forecasting, but **the current UI does not yet use those capabilities**.
+Therefore the present Chronos implementation should be understood as a
+pretrained univariate target forecaster inside an otherwise multivariate
+application.
+
+**Strengths**
+
+- zero-shot forecasting: no per-dataset model fitting is required
+- directly predicts the full forecast horizon instead of recursively fitting
+  one-step models
+- provides probabilistic information through forecast quantiles
+- can transfer patterns learned during large-scale pretraining to a new series
+
+**Limitations**
+
+- the model must be downloaded before first use
+- the browser uses an INT8 ONNX export, so results need not exactly match a
+  full-precision official checkpoint
+- the current UI ignores additional numeric columns when calling Chronos-2
+- browser memory and WASM execution place practical limits on model size and
+  context length
+
+On the repository's current AirPassengers 128/16 holdout benchmark,
+`Chronos-2-small INT8 ONNX` achieved the lowest MAE, RMSE, MAPE, sMAPE, and
+MASE among the comparable models. See the benchmark section below for the
+measured values and evaluation protocol.
+
+### 16-step forecast
+
+The application-level default horizon is 16 because the integrated Chronos-2
+ONNX model uses 16-point patches, and the XGBoost and VARMA APIs are aligned to
+the same horizon for comparison.
+
+The algorithms reach those 16 points differently:
+
+- **XGBoost** predicts recursively. Each predicted target value becomes part of
+  the history for the next step, while non-target context is also advanced.
+- **VARMA experimental** predicts a complete multivariate vector recursively
+  and feeds that predicted vector into the next step.
+- **Chronos-2** performs direct multi-step probabilistic inference and returns
+  the first 16 future positions from the pretrained model output.
+
+This difference matters when comparing the models: XGBoost and VARMA can
+accumulate recursive forecast error, whereas Chronos-2 generates the requested
+future sequence directly.
 
 ---
 
-## Feature Engineering
+## Feature Engineering (XGBoost)
 
-This project treats the input as a small multi-variate time series:
+The hand-engineered features in this section apply to the XGBoost pipeline. VARMA uses normalized lag vectors directly, while Chronos-2 operates on the selected target sequence without these features.
+
+The XGBoost pipeline treats the input as a small multi-variate time series:
 
 - One *datetime-like* column (header contains `date` or `time` in any case).
 - Several numeric columns (e.g., `item_a`, `item_b`, `item_c`, ...).
@@ -292,6 +427,8 @@ frontend_test
 
 ## AirPassengers Benchmark
 
+See [`BENCHMARKS.md`](./BENCHMARKS.md) for the fair 16-step protocol and paper-comparison rules.
+
 The repository includes an AirPassengers dataset and a benchmark command for checking model behavior against a classic monthly time-series dataset.
 
 Run the benchmark with Docker Compose:
@@ -314,7 +451,49 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
   node scripts/benchmark-air-passengers.mjs --algorithm seasonal-naive --json
 ```
 
-### AirPassengers xgboost benchmark
+
+### 16-step holdout benchmark
+
+The following results use the same fixed-origin evaluation protocol for every
+comparable model:
+
+- train: first 128 AirPassengers observations
+- holdout: next 16 observations
+- no holdout target value is fed back during forecasting
+- common point metrics: MAE, RMSE, MAPE, sMAPE, and MASE
+
+Reproduce the benchmark with:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  air_passengers_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-air-passengers-fair.mjs --markdown
+  '
+```
+
+Measured results:
+
+| Model | Train | Horizon | MAE | RMSE | MAPE | sMAPE | MASE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| seasonal-naive | 128 | 16 | 64.2500 | 68.0808 | 14.1651% | 15.4031% | 2.1748 |
+| xgboost | 128 | 16 | 24.5775 | 29.5014 | 5.5687% | 5.3717% | 0.8319 |
+| Chronos-2-small INT8 ONNX | 128 | 16 | **14.7839** | **17.3376** | **3.2438%** | **3.2636%** | **0.5004** |
+| VARMA experimental | 128 | 16 | N/A | N/A | N/A | N/A | N/A |
+
+Under this 16-step AirPassengers holdout, Chronos-2-small INT8 ONNX produced
+the lowest error on every reported point metric. This is an application-level
+comparison, not a direct reproduction of aggregate scores from the Chronos-2
+paper.
+
+VARMA is reported as N/A because AirPassengers is univariate while this
+repository's experimental VARMA implementation requires at least two numeric
+series. See [`BENCHMARKS.md`](./BENCHMARKS.md) for the multivariate and
+paper-comparison protocol.
+
+
+### AirPassengers xgboost benchmark (120/24)
 
 #### csv: data/air_passengers.csv
 |  | This Work | seasonal-naive | 

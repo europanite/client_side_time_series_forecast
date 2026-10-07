@@ -13,6 +13,8 @@ import {
   forecastNextN,
 } from "./core";
 import { forecastVarmaNextN, trainVarmaModel } from "./varma";
+import { forecastChronosNext16 } from "./chronos";
+import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -36,7 +38,7 @@ ChartJS.register(
 
 
 type LineDataset = ChartData<"line">["datasets"][number];
-type ModelKind = "xgboost" | "varma";
+type ModelKind = "xgboost" | "varma" | "chronos";
 
 
 export default function App() {
@@ -163,6 +165,12 @@ export default function App() {
 
   async function handleTrain(): Promise<void> {
     if (!data || !target) return;
+
+    if (modelKind === "chronos") {
+      setStatus("Chronos-2 is pretrained; training is not required");
+      return;
+    }
+
     setStatus("training ...");
     try {
       const trainedModel =
@@ -179,27 +187,57 @@ export default function App() {
   }
 
   async function handlePredict(): Promise<void> {
-    if (!data || !target || !model) return;
+    if (!data || !target) return;
+    if (modelKind !== "chronos" && !model) return;
 
-    setStatus("predicting 10 steps ...");
+    if (modelKind === "chronos") {
+      setStatus("loading Chronos-2 ...");
+
+      try {
+        const result = await forecastChronosNext16(
+          data,
+          target,
+          (message) => setStatus(message)
+        );
+        setForecastPoints(result.points);
+        setForecast(
+          [
+            `Model="chronos" Target="${target}" → next ${DEFAULT_FORECAST_HORIZON} pretrained forecasts:`,
+            ...result.points.map((point, index) =>
+              [
+                `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`,
+                `(p10=${result.lower[index].toFixed(4)},`,
+                `p90=${result.upper[index].toFixed(4)})`,
+              ].join(" ")
+            ),
+          ].join("\n")
+        );
+        setStatus(`predicted ${DEFAULT_FORECAST_HORIZON} steps with Chronos-2`);
+      } catch (err: any) {
+        setStatus(`error: ${err.message || String(err)}`);
+      }
+      return;
+    }
+
+    setStatus(`predicting ${DEFAULT_FORECAST_HORIZON} steps ...`);
 
     try {
       const points =
         modelKind === "varma"
-          ? forecastVarmaNextN(data, target, model, 10)
-          : forecastNextN(data, target, model, 10);
+          ? forecastVarmaNextN(data, target, model, DEFAULT_FORECAST_HORIZON)
+          : forecastNextN(data, target, model, DEFAULT_FORECAST_HORIZON);
       setForecastPoints(points);
 
       setForecast(
         [
-          `Model="${modelKind}" Target="${target}" → next 10 forecasts:`,
+          `Model="${modelKind}" Target="${target}" → next ${DEFAULT_FORECAST_HORIZON} forecasts:`,
           ...points.map(
             (point, index) =>
               `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`
           ),
         ].join("\n")
       );
-      setStatus("predicted 10 steps");
+      setStatus(`predicted ${DEFAULT_FORECAST_HORIZON} steps`);
     } catch (err: any) {
       setStatus(`error: ${err.message || String(err)}`);
     }
@@ -208,6 +246,9 @@ export default function App() {
   const chart = buildChartData(data, target, forecastPoints);
   const REPO_URL =
     "https://github.com/europanite/client_side_time_series_forecast";
+  const canTrain = !!data && !!target && modelKind !== "chronos";
+  const canForecast =
+    !!data && !!target && (modelKind === "chronos" || !!model);
 
   return (
     <View
@@ -328,34 +369,40 @@ export default function App() {
         >
           <option value="xgboost">XGBoost</option>
           <option value="varma">VARMA experimental</option>
+          <option value="chronos">Chronos-2 pretrained</option>
         </select>
 
         <Pressable
           onPress={handleTrain}
+          disabled={!canTrain}
           style={{
             width: 100,
             paddingVertical: 8,
             paddingHorizontal: 16,
             borderRadius: 999,
-            backgroundColor: "#22c55e",
+            backgroundColor: canTrain ? "#22c55e" : "#371f1f",
+            opacity: canTrain ? 1 : 0.4,
           }}
         >
-          <Text style={{ color: "#020817", fontWeight: "600" }}>Train</Text>
+          <Text style={{ color: "#020817", fontWeight: "600" }}>
+            {modelKind === "chronos" ? "Pretrained" : "Train"}
+          </Text>
         </Pressable>
 
         <Pressable
           onPress={handlePredict}
+          disabled={!canForecast}
           style={{
-            width: 100,
+            width: 110,
             paddingVertical: 8,
             paddingHorizontal: 16,
             borderRadius: 999,
-            backgroundColor: model ? "#38bdf8" : "#371f1f",
-            opacity: model ? 1 : 0.4,
+            backgroundColor: canForecast ? "#38bdf8" : "#371f1f",
+            opacity: canForecast ? 1 : 0.4,
           }}
         >
           <Text style={{ color: "#020817", fontWeight: "600" }}>
-            Forecast +10
+            {`Forecast +${DEFAULT_FORECAST_HORIZON}`}
           </Text>
         </Pressable>
       </View>

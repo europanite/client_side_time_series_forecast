@@ -3,10 +3,12 @@ import {
   loadFromXLSX,
   trainModel,
   predictNext,
+  forecastNextN,
   type LoadedData,
 } from "../core";
 import { parseXLSX, buildFeatures } from "../api";
 import { initXGBoostCtor } from "../xgb";
+import { DEFAULT_FORECAST_HORIZON } from "../forecast-config";
 
 // --- mocks setup ---
 
@@ -140,4 +142,30 @@ describe("trainModel & predictNext", () => {
     const yhat = predictNext(data, "target", booster);
     expect(yhat).toBeCloseTo(20);
   });
+
+  it("uses the shared 16-step horizon by default", () => {
+    mockedBuildFeatures.mockReturnValue({
+      X: [[100]],
+      y: [100],
+      lastFeatureRow: [100],
+    } as any);
+
+    const data: LoadedData = {
+      rows: [{ date: "2026-01-01", target: "100" }],
+      headers: ["date", "target"],
+      datetimeKey: "date",
+    };
+
+    const model = {
+      predict: jest.fn(() => [100]),
+    };
+
+    const points = forecastNextN(data, "target", model);
+
+    expect(DEFAULT_FORECAST_HORIZON).toBe(16);
+    expect(points).toHaveLength(DEFAULT_FORECAST_HORIZON);
+    expect(points[0].label).toBe("2026-01-02");
+    expect(points[points.length - 1].label).toBe("2026-01-17");
+  });
+
 });

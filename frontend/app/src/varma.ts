@@ -1,4 +1,5 @@
 import type { ForecastPoint, LoadedData } from "./core";
+import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
 
 export type VarmaModel = {
   kind: "varma-experimental";
@@ -108,7 +109,7 @@ export function forecastVarmaNextN(
   data: LoadedData,
   targetKey: string,
   model: VarmaModel,
-  horizon = 10
+  horizon = DEFAULT_FORECAST_HORIZON
 ): ForecastPoint[] {
   const targetIndex = model.keys.indexOf(targetKey);
   if (targetIndex < 0) {

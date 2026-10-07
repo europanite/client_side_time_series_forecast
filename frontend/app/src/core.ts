@@ -1,5 +1,6 @@
 import { parseCSV, parseXLSX, buildFeatures } from "./api";
 import { initXGBoostCtor } from "./xgb";
+import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
 
 export type LoadedData = {
   rows: any[];
@@ -97,7 +98,7 @@ export function forecastNextN(
   data: LoadedData,
   targetKey: string,
   model: any,
-  horizon = 10
+  horizon = DEFAULT_FORECAST_HORIZON
 ): ForecastPoint[] {
   const rows = data.rows.map((row) => ({ ...row }));
   const period = inferSeasonalPeriod(rows, data.datetimeKey);
