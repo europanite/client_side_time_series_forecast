@@ -1,4 +1,46 @@
 services:
+  lightgbm_air_passengers_benchmark:
+    profiles:
+      - benchmark
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: lightgbm_air_passengers_benchmark
+    working_dir: /repo
+    volumes:
+      - ./:/repo
+      - /repo/frontend/app/node_modules
+    command: >-
+      sh -lc "npm --prefix frontend/app ci && node scripts/benchmark-air-passengers-fair.mjs --algorithm lightgbm --markdown"
+
+  lightgbm_multivariate_benchmark:
+    profiles:
+      - benchmark
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: lightgbm_multivariate_benchmark
+    working_dir: /repo
+    volumes:
+      - ./:/repo
+      - /repo/frontend/app/node_modules
+    command: >-
+      sh -lc "npm --prefix frontend/app ci && node scripts/benchmark-multivariate-lightgbm.mjs --markdown"
+
+  air_passengers_fair_benchmark:
+    profiles:
+      - benchmark
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: air_passengers_fair_benchmark
+    working_dir: /repo
+    volumes:
+      - ./:/repo
+      - /repo/frontend/app/node_modules
+    command: >-
+      sh -lc "npm --prefix frontend/app ci && node scripts/benchmark-air-passengers-fair.mjs"
+
   frontend_test:
     build:
       context: ./frontend

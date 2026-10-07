@@ -27,40 +27,40 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-一个完全在客户端浏览器中运行的时间序列预测 Playground，由 XGBoost、实验性 VARMA 风格模型和 Chronos-2 提供支持。
+一个完全在客户端浏览器中运行的时间序列预测Playground，由XGBoost、LightGBM、实验性VARMA风格模型和Chronos-2提供支持。
 
-该应用可加载 CSV 或 XLSX 文件，检测日期时间列和数值列，让你选择预测模型，并同时可视化观测值和未来 16 步预测。你的数据始终保留在浏览器中。
+该应用可加载CSV或XLSX文件，自动检测datetime列和数值列，让你选择预测模型，并同时可视化观测值和未来16步预测。你的数据始终保留在浏览器中。
 
 ---
 
-## 概述
+## 概览
 
-这是一个完全在 Web 浏览器中运行的多变量时间序列预测工具。
+这是一个完全在Web浏览器中运行的多变量时间序列预测工具。
 无需安装、注册或付费。 
-只需通过浏览器访问即可开始使用。
-它可以帮助小型企业预测明天的订单量。
+只需用浏览器访问即可开始使用。
+它可以帮助小型企业预测第二天的订单量。
 
-- 在浏览器中加载 CSV/XLSX 时间序列数据集
+- 在浏览器中加载CSV/XLSX时间序列数据集
 - 选择任意数值列作为预测目标
-- 在 XGBoost、实验性 VARMA 风格模型和预训练 Chronos-2 之间选择
-- 在浏览器中本地训练所选模型
-- 预测接下来的 16 个点并将其追加到图表中
+- 在XGBoost、LightGBM、实验性VARMA风格模型和预训练Chronos-2之间选择
+- 在浏览器本地训练所选模型
+- 预测接下来的16个点，并将结果追加到图表中
 
-所有处理都发生在**你的浏览器内部**。没有后端 API，也不会有数据离开你的设备。
+所有操作都发生在**你的浏览器内部**。没有后端API，也不会有任何数据离开你的设备。
 
 ---
 
 ## 演示
 
-1. 打开 GitHub Pages 演示：  
+1. 打开GitHub Pages演示：  
    https://europanite.github.io/client_side_time_series_forecast/
-2. 上传示例文件，例如 [`data/sample_data.csv`](./data/datsample_dataa.csv) 或 [`data/sample_data.xlsx`](./data/sample_data.xlsx)。
+2. 上传示例文件，例如[`data/sample_data.csv`](./data/datsample_data.csv)或[`data/sample_data.xlsx`](./data/sample_data.xlsx)。
 3. 应用将：
-   - 检测一个**类似日期时间的列**
+   - 检测一个**类似datetime的列**
    - 列出可用的数值列
-4. 选择一个数值列作为**目标**。
-5. 选择一个**预测模型**。`XGBoost` 为默认模型，`VARMA experimental` 是轻量级多变量基线，`Chronos-2 pretrained` 是零样本基础模型。
-6. 对于 XGBoost 或 VARMA，先点击 **Train**。Chronos-2 已完成预训练，不需要本地训练。然后点击 **Forecast +16**，预测接下来的 16 个点。
+4. 选择一个数值列作为**target**。
+5. 选择一个**forecast model**。`XGBoost`是默认模型，`LightGBM`是另一种本地训练的GBDT，`VARMA experimental`是轻量级多变量baseline，`Chronos-2 pretrained`是zero-shot foundation model。
+6. 对于XGBoost、LightGBM或VARMA，先点击**Train**。Chronos-2已经预训练完成，不需要本地训练。然后点击**Forecast +16**，预测接下来的16个点。
 7. 查看图表，对比观测序列和预测曲线。
 
 ---
@@ -77,254 +77,261 @@ datetime,item_a,item_b,item_c,...
 
 ### 要求：
 
-##### 一个类似日期时间的列
-列标题中包含 "date" 或 "time"（不区分大小写）。
+##### 一个类似datetime的列
+列标题中包含"date"或"time"（不区分大小写）。
 该列用作时间轴，但不会直接转换为数值特征。
 
 ##### 一个或多个数值列
-这些列用作目标和/或外生特征。
-应用支持两种预测模式：
+这些列可作为target和/或exogenous features。
+应用支持三种在本地拟合的预测模式：
 
-- **XGBoost**：选择一个数值列作为目标，其余数值列用作附加信号。
-- **VARMA experimental**：所有数值列共同建模，所选目标列作为预测输出显示。
+- **XGBoost**：选择一个数值列作为target，其他数值列用作额外信号。
+- **LightGBM**：使用与XGBoost相同的target和工程化多变量特征，但拟合LightGBM regressor。
+- **VARMA experimental**：联合建模所有数值列，并将所选target列显示为预测输出。
 
 ---
 
 ## 预测方法
 
-本项目提供三种预测算法，它们刻意采用不同的假设：
+本项目提供四种预测算法，并且有意让它们采用不同的假设：
 
-| 模型 | 学习方式 | 使用多个输入序列？ | 本地训练？ | 预测方式 |
+| 模型 | 学习方式 | 是否使用多个输入序列？ | 本地训练？ | 预测方式 |
 | --- | --- | --- | --- | --- |
-| XGBoost | 基于人工构造时间序列特征的梯度提升决策树回归 | 是 | 是 | 递归单步预测 |
-| VARMA experimental | 带岭正则化、残差修正和季节性稳定处理的线性多输出自回归 | 是，联合建模 | 是 | 递归多输出预测 |
-| Chronos-2-small INT8 ONNX | 预训练的基于 patch 的时间序列基础模型 | 当前 UI 中仅使用所选目标 | 否 | 直接概率多步预测 |
+| XGBoost | 基于工程化时间序列特征的梯度提升决策树回归 | 是 | 是 | 递归单步预测 |
+| LightGBM | 基于与XGBoost相同工程化特征的直方图梯度提升决策树回归 | 是 | 是 | 递归单步预测 |
+| VARMA experimental | 带ridge正则化、残差修正和季节稳定化的线性multi-output自回归 | 是，联合建模 | 是 | 递归multi-output预测 |
+| Chronos-2-small INT8 ONNX | 预训练patch-based时间序列foundation model | 当前UI仅使用所选target | 否 | 直接概率multi-step预测 |
 
-不应把这三个模型理解为同一种算法的三个实现。XGBoost 将时间序列转换为监督式表格学习问题；VARMA 联合建模多个序列的滞后向量；Chronos-2 则使用预训练神经预测模型，而无需针对上传的数据集拟合新参数。
+不应把这些模型理解为同一种算法的四种实现。XGBoost和LightGBM会把时间序列转换成相同的监督式表格学习问题；VARMA会联合建模多个序列的滞后向量；Chronos-2则使用预训练神经预测模型，而不会在上传的数据集上拟合新的参数。
 
 ### 模型选择
 
 #### XGBoost
 
-`XGBoost` 是默认的本地训练模型。XGBoost 是梯度提升决策树算法：依次加入许多决策树，每棵新树都会减少此前集成模型留下的误差。时间序列不会直接传给 XGBoost。本项目首先把每个时间步转换为特征向量，然后将 XGBoost 作为回归模型进行训练。
+`XGBoost`是默认的本地训练模型。XGBoost是一种gradient-boosted decision-tree算法：多个decision tree按顺序加入，每棵新树都用于降低前一轮ensemble留下的误差。时间序列不会直接传入XGBoost。本项目先把每个time step转换为feature vector，然后将XGBoost作为回归模型进行训练。
 
 浏览器实现使用：
 
-- 目标序列和外生序列的滞后项，最多到 `MAX_LAG = 3`
-- 一阶差分
-- `ROLLING_WINDOW = 7` 的滚动均值
-- 数值序列之间的差值、比值和乘积交互
-- 时间索引
-- 周期为 24 和 168 的 Fourier 特征
-- `gbtree`，深度 4、学习率 0.1、subsample 0.8、200 次 boosting 迭代
+- 最多到`MAX_LAG = 3`的target和exogenous lags
+- first differences
+- `ROLLING_WINDOW = 7` rolling mean
+- 数值序列之间的spread、ratio和product interactions
+- time index
+- 周期为24和168的Fourier features
+- `gbtree`，depth 4、learning rate 0.1、subsample 0.8、200 boosting iterations
 
-对于 16 步预测，模型每次预测一步。每个预测值都会追加到工作历史中，因此可供下一步使用。原始 XGBoost 预测值还会与季节性延续估计进行混合。非目标数值上下文会继续向前推进，而不是保持不变。
+对于16-step forecast，模型每次只预测一步。每次预测都会追加到工作history中，因此可以用于下一步预测。原始XGBoost prediction还会与seasonal continuation estimate进行blend。非target的numeric context也会继续向前推进，而不是保持不变。
 
 **优势**
 
-- 能捕捉序列之间的非线性关系和交互作用
-- 能自然利用项目中手工构造的多变量特征
-- 可在浏览器中本地、较快地训练
+- 能捕捉序列之间的非线性关系和interaction
+- 能自然利用项目手工设计的multivariate features
+- 可在浏览器中本地、相对快速地训练
 - 不需要下载大型预训练模型
 
-**局限**
+**限制**
 
-- 预测质量取决于所选择的特征工程
-- 递归预测可能在后续步骤中累积误差
-- 固定 Fourier 周期和季节性延续属于应用层假设，而不是自动学习得到的日历结构
+- 预测质量依赖所采用的feature engineering
+- recursive forecasting可能在较远预测步上积累误差
+- 固定Fourier周期和seasonal continuation属于application-level假设，而不是自动学习到的calendar structure
 
-当你需要一个轻量、本地训练且能利用多个数值列之间关系的非线性模型时，可使用 XGBoost。
+如果你需要一个轻量、本地训练、非线性的模型，并希望利用多个数值列之间的关系，可以使用XGBoost。
+
+#### LightGBM
+
+`LightGBM`是第二个本地训练的gradient-boosted decision-tree model。浏览器实现使用LightGBM的WebAssembly构建`@wlearn/lightgbm`，并且有意复用XGBoost相同的`buildFeatures()` output和16-step recursive forecasting path。
+
+默认LightGBM配置使用regression、learning rate 0.1、31 leaves、max depth 4、subsample 0.8以及200 boosting rounds。原始tree prediction会与XGBoost所使用的同一个seasonal continuation estimate进行blend。
+
+如果你希望在保持feature pipeline和application-level forecast protocol不变的前提下，获得一个可以直接比较的histogram-based GBDT alternative，可以使用LightGBM。
 
 #### VARMA experimental
 
-`VARMA experimental` 是一个轻量、浏览器原生的多变量基线。尽管名称如此，这个实现**并不是完整的统计最大似然 VARMA 估计器**。它更接近带少量残差修正和显式季节性稳定处理的正则化 VAR 风格模型。
+`VARMA experimental`是一个轻量级、browser-native的多变量baseline。尽管名称如此，这个实现**并不是完整的统计maximum-likelihood VARMA estimator**。它更接近一个regularized VAR-style model，并加入少量residual correction以及显式seasonal stabilization。
 
-其实现方式如下：
+实现过程：
 
-1. 选择最多 8 个数值序列并进行标准化；
-2. 将前 7 个多变量向量拼接为一个滞后特征向量；
-3. 使用多输出岭回归同时拟合所有输出序列
-   (`ridge = 1e-2`)；
-4. 根据最近的残差估计一个小幅修正 (`maLag = 1`)；
-5. 在预测期间，将自回归输出与季节滞后的向量混合
-   (`seasonalLag = 7`, `seasonalBlend = 0.55`)；
-6. 将预测出的向量递归反馈到下一预测步骤。
+1. 选择最多8个数值序列并进行标准化；
+2. 将前7个多变量vector拼接成一个lag feature vector；
+3. 使用multi-output ridge regression（`ridge = 1e-2`）同时拟合所有输出序列；
+4. 从近期residual中估计一个小的修正项（`maLag = 1`）；
+5. 在预测期间，将autoregressive output与seasonal lag的vector进行blend（`seasonalLag = 7`, `seasonalBlend = 0.55`）；
+6. 递归地把预测vector反馈到下一预测步。
 
-由于每一步都会预测完整的数值向量，因此 VARMA 会让所有已建模序列一起向前推进，而不是只预测所选目标。
+由于每一步都会预测完整的numeric vector，因此VARMA会同时推进所有已建模序列，而不只是预测所选target。
 
 **优势**
 
 - 简单且计算成本低
-- 联合建模多个数值序列
-- 可作为对比 XGBoost 和 Chronos-2 的实用线性/经典风格基线
-- 完全使用 TypeScript 运行，不需要单独下载模型
+- 能联合建模多个数值序列
+- 可作为XGBoost和Chronos-2的实用linear/classical-style baseline
+- 完全在TypeScript中运行，无需额外下载模型
 
-**局限**
+**限制**
 
-- 至少需要两个数值序列以及超过 7 行可用数据
-- 主要假设线性的滞后关系
-- 残差修正和季节性混合是实用的稳定手段，并不是完整的移动平均估计过程
-- 不应将其作为统计 VARMA 的参考实现来介绍
+- 至少需要两个数值序列，并且需要超过7行可用数据
+- 主要假设线性lag关系
+- residual correction和seasonal blending是实用的稳定化方法，并非完整的moving-average estimation procedure
+- 不应把它当作统计VARMA的reference implementation
 
-当多个序列共同变化时，主要将 `VARMA experimental` 用作透明的多变量基线。
+当多个序列共同变化时，可主要将`VARMA experimental`作为透明的多变量baseline使用。
 
 #### Chronos-2 pretrained
 
-`Chronos-2 pretrained` 与上面两个本地拟合模型有根本区别。Chronos-2 是一个预训练、基于 patch 的时间序列基础模型，可直接生成多步**分位数预测**。本仓库通过 ONNX Runtime Web 将 `Chronos-2-small INT8` 作为 ONNX 模型运行，因此模型下载完成后，推理在本地执行。
+`Chronos-2 pretrained`与上面的本地拟合模型有本质区别。Chronos-2是一个预训练的patch-based time-series foundation model，可直接产生multi-step **quantile forecasts**。本repository通过ONNX Runtime Web运行`Chronos-2-small INT8` ONNX model，因此模型下载完成后，inference会在本地执行。
 
 当前浏览器集成：
 
 - **不会**在上传的数据集上训练；
-- 仅使用所选目标序列作为 Chronos 上下文；
-- 至少需要 16 个数值型目标观测值；
-- 最多保留 5,760 个上下文观测值；
-- 将输入分组为 16 点 patch，对不完整的第一个 patch 在左侧用 `NaN` 填充；
-- 运行 ONNX 图内部的 672 步输出
-  (`42 × 16`)，并向 UI 暴露前 16 步；
-- 读取模型的分位数输出，显示中位数 (`p50`) 预测，同时显示
-  `p10` 和 `p90` 不确定性边界。
+- 仅使用所选target series作为Chronos context；
+- 至少需要16个numeric target observations；
+- 最多保留5,760个context observations；
+- 将输入分组成16-point patches，并对不完整的第一个patch在左侧用`NaN`进行padding；
+- 运行ONNX graph内部的672-step output（`42 × 16`），并向UI提供前16 steps；
+- 读取模型的quantile output，并显示median（`p50`）forecast以及`p10`和`p90` uncertainty bounds。
 
-Chronos-2 本身支持更丰富的多变量预测和利用协变量信息的预测，但**当前 UI 尚未使用这些能力**。因此，目前的 Chronos 实现应理解为：在一个整体上支持多变量的应用中，作为预训练的单变量目标预测器使用。
+Chronos-2本身支持更丰富的多变量和covariate-informed forecasting，但**当前UI尚未使用这些能力**。因此，当前Chronos实现应理解为：在一个整体上多变量的应用中使用的预训练单变量target forecaster。
 
 **优势**
 
-- 零样本预测：无需针对每个数据集单独拟合模型
-- 直接预测完整预测范围，而不是递归拟合单步模型
-- 通过预测分位数提供概率信息
-- 可将大规模预训练中学到的模式迁移到新的序列
+- zero-shot forecasting：无需针对每个数据集单独拟合模型
+- 直接预测完整forecast horizon，而不是递归拟合one-step models
+- 通过forecast quantiles提供概率信息
+- 能将大规模预训练期间学到的pattern迁移到新series
 
-**局限**
+**限制**
 
 - 首次使用前必须下载模型
-- 浏览器使用 INT8 ONNX 导出，因此结果不一定与全精度官方 checkpoint 完全一致
-- 当前 UI 在调用 Chronos-2 时忽略其他数值列
-- 浏览器内存和 WASM 执行会对模型大小和上下文长度施加实际限制
+- 浏览器使用INT8 ONNX export，因此结果不一定与full-precision official checkpoint完全一致
+- 当前UI调用Chronos-2时会忽略额外的数值列
+- browser memory和WASM execution会对model size和context length施加实际限制
 
-在本仓库当前的 AirPassengers 128/16 holdout benchmark 中，`Chronos-2-small INT8 ONNX` 在可比较模型里取得了最低的 MAE、RMSE、MAPE、sMAPE 和 MASE。具体测量值和评估协议请参见下面的 benchmark 部分。
+在repository当前的AirPassengers 128/16 holdout benchmark中，`Chronos-2-small INT8 ONNX`在可比较模型中取得了最低的MAE、RMSE、MAPE、sMAPE和MASE。具体测量值和evaluation protocol见下方benchmark章节。
 
-### 16 步预测
+### 16-step forecast
 
-应用层默认预测范围为 16，因为集成的 Chronos-2 ONNX 模型使用 16 点 patch，同时 XGBoost 和 VARMA API 也统一到相同范围以便比较。
+应用层默认horizon为16，因为集成的Chronos-2 ONNX model使用16-point patches，同时为了便于比较，XGBoost、LightGBM和VARMA API也统一到相同horizon。
 
-三种算法以不同方式得到这 16 个点：
+这些算法以不同方式得到这16个预测点：
 
-- **XGBoost** 采用递归预测。每个预测出的目标值都会成为下一步历史的一部分，同时非目标上下文也会向前推进。
-- **VARMA experimental** 递归预测完整多变量向量，并将该预测向量反馈给下一步。
-- **Chronos-2** 执行直接的多步概率推理，并从预训练模型输出中返回前 16 个未来位置。
+- **XGBoost**递归预测。每个预测的target value都会成为下一步history的一部分，同时非target context也会继续推进。
+- **LightGBM**使用与XGBoost相同的engineered feature pipeline和recursive application-level forecast policy。
+- **VARMA experimental**递归预测一个完整的multivariate vector，并把该预测vector输入下一步。
+- **Chronos-2**执行direct multi-step probabilistic inference，并从预训练model output中返回前16个future positions。
 
-这个差异对模型比较很重要：XGBoost 和 VARMA 可能累积递归预测误差，而 Chronos-2 会直接生成所请求的未来序列。
+在比较模型时，这一区别很重要：XGBoost、LightGBM和VARMA可能积累recursive forecast error，而Chronos-2会直接生成所请求的未来序列。
 
 ---
 
-## 特征工程 (XGBoost)
+## 特征工程（XGBoost / LightGBM）
 
-本节中的手工构造特征适用于 XGBoost pipeline。VARMA 直接使用标准化的滞后向量，而 Chronos-2 不使用这些特征，只对所选目标序列进行处理。
+本节中的手工设计特征同时适用于XGBoost和LightGBM pipeline。VARMA直接使用标准化lag vectors，而Chronos-2不使用这些特征，只处理所选target sequence。
 
-XGBoost pipeline 将输入视为一个小型多变量时间序列：
+tree-boosting pipeline把输入视为一个小型multi-variate time series：
 
-- 一个*类似日期时间*的列（标题中以任意大小写形式包含 `date` 或 `time`）。
-- 多个数值列（例如 `item_a`, `item_b`, `item_c`, ...）。
-- 选择其中一个数值列作为要预测的**目标**。
+- 一个*datetime-like* column（header中以任意大小写包含`date`或`time`）。
+- 多个numeric columns（例如`item_a`, `item_b`, `item_c`, ...）。
+- 从numeric columns中选择一个作为要预测的**target**。
 
-在内部，特征构建器会为每个时间步 `t` 构建一个**丰富的特征向量**，并为 `t + 1` 构建一个**未来特征向量**。所有特征都通过 JavaScript/TypeScript **完全在客户端**计算。
+在内部，feature builder会为每个time step `t`构建一个**rich feature vector**，并为`t + 1`构建一个**future feature vector**。所有features都**完全在客户端**使用JavaScript/TypeScript计算。
 
 ### 用于特征的序列
 
 - `datetimeKey`  
-  - 从包含 `"date"` 或 `"time"` 的标题中自动检测。
-  - 仅用于定位时间轴；不会直接作为数值特征使用。
+  - 自动从包含`"date"`或`"time"`的header中检测。
+  - 仅用于定位时间轴，不直接作为numeric feature。
 - `targetKey`  
-  - 用户选择用于预测的数值列。
+  - 用户选择进行预测的numeric column。
 - `featureKeys`  
-  - 所有其他数值列（非日期时间、非目标）。
-  - 被视为**外生序列**。
+  - 所有其他numeric columns（non-datetime、non-target）。
+  - 作为**exogenous series**处理。
 
-内部维护一个 `seriesMap: Record<string, number[]>`，每个序列对应一个数值数组。
+内部维护一个`seriesMap: Record<string, number[]>`，其中每个series对应一个numeric array。
 
-### 每个序列的特征（外生序列）
+### 每个序列的特征（exogenous series）
 
-对于每个外生序列 `x(t)`（`featureKeys` 中的每个 key）以及每个时间步 `t`，我们计算：
+对于每个exogenous series `x(t)`（`featureKeys`中的每个key）以及每个time step `t`，计算：
 
-1. **同期值**
-   - `x(t)`（时间索引 `t` 处的值）。
+1. **同时点值**
+   - `x(t)`（time index `t`处的值）。
 
-2. **滞后特征（历史）**
-   - 最多到 `MAX_LAG = 3`：
+2. **Lag features（history）**
+   - 最多到`MAX_LAG = 3`：
      - `x(t - 1)`
      - `x(t - 2)`
      - `x(t - 3)`
-   - 这使模型能够学习每个序列的短期时间动态。
+   - 让模型可以学习每个series的短期时间动态。
 
-3. **一阶差分**
+3. **First difference**
    - `x(t) - x(t - 1)`
-   - 捕捉局部变化（趋势/斜率），而不仅仅是绝对水平。
+   - 捕捉局部变化（trend / slope），而不仅仅是绝对水平。
 
-4. **滚动均值（局部平均）**
-   - `ROLLING_WINDOW = 7` 个时间步的滚动窗口：
-     - `mean(x[t - 6 ... t])`（在序列开头附近会截短）
-   - 表示局部趋势/基准水平，并平滑短期噪声。
+4. **Rolling mean（local average）**
+   - `ROLLING_WINDOW = 7`个time steps的rolling window：
+     - `mean(x[t - 6 ... t])`（在series开头附近会缩短）
+   - 表示局部trend / baseline level，并平滑短期noise。
 
-> 如果序列比窗口短，代码会自动缩小窗口，以使用截至 `t` 为止所有可用的历史点。
+> 如果series短于window，代码会自动缩短window，使`t`之前所有可用的过去点都被使用。
 
-### 目标序列历史
+### Target-series history
 
-对于**目标序列** `y(t)` 本身，我们**不会**把当前值 `y(t)` 作为特征（因为它是该步骤的标签），但会包含其历史：
+对于**target series** `y(t)`本身，我们**不会**把当前值`y(t)`作为feature（因为它就是该step的label），但会包含其history：
 
-1. **目标滞后项**
+1. **Target lags**
    - `y(t - 1)`
    - `y(t - 2)`
    - `y(t - 3)`
 
-2. **目标差分**
+2. **Target difference**
    - `y(t) - y(t - 1)`
 
-3. **目标滚动均值**
-   - 与上面相同的滚动窗口：
+3. **Target rolling mean**
+   - 使用与上面相同的rolling window：
      - `mean(y[t - 6 ... t])`
 
-这使模型可以学习诸如“下一个值取决于最近几个值及其局部趋势”这样的模式，这在时间序列预测中很常见。
+这让模型可以学习类似“下一个值取决于最近几个值以及它们的局部trend”的pattern，这在time-series forecasting中很常见。
 
-### 跨序列交互
+### Cross-series interactions
 
-为了捕捉**不同序列之间的关系**，我们为每一对**数值序列**（包括目标）构建交互特征：
+为了捕捉**不同series之间的关系**，我们会为每一对**numeric series**（包括target）构建interaction features：
 
-- 设 `v_i(t)` 和 `v_j(t)` 为两个序列在时间 `t` 的同期值。
-- 对每个满足 `i < j` 的有序对 `(i, j)`，计算：
+- 设`v_i(t)`和`v_j(t)`为time `t`时两个series的同时点值。
+- 对每个满足`i < j`的ordered pair `(i, j)`，计算：
 
-1. **差值**
+1. **Spread**
    - `v_i(t) - v_j(t)`
-   - 编码序列之间的相对水平差异。
+   - 编码series之间的相对level差异。
 
-2. **比值**
+2. **Ratio**
    - `v_i(t) / v_j(t)`
-   - 为避免除以零，如有需要，分母会加入一个很小的 epsilon：
+   - 为避免除零，如有需要会在denominator中加入一个很小的epsilon：
      - `denom = |v_j| < 1e-9 ? sign(v_j) * 1e-9 : v_j`
-   - 编码相对尺度和比例关系。
+   - 编码相对scale和比例关系。
 
-3. **乘积**
+3. **Product**
    - `v_i(t) * v_j(t)`
-   - 使模型可以表达两个序列同时较大或较小时才重要的“交互效应”。
+   - 让模型能够表达“interaction effects”，即两个series同时较大或较小时本身具有意义。
 
-这些跨序列特征把**多序列结构**显式提供给 booster，而不是只依赖各个序列自身的值。
+这些cross-series features会显式地把**multi-series structure**提供给booster，而不是只依赖单个series的值。
 
-### 时间索引和 Fourier 特征
+### Time index和Fourier features
 
-我们还将时间本身编码为数值特征：
+我们也把时间本身编码为numeric features：
 
-1. **时间索引**
-   - 整数索引 `t = 0, 1, 2, ...`（行索引）。
-   - 为 booster 提供一种简单方式来建模全局趋势。
+1. **Time index**
+   - Integer index `t = 0, 1, 2, ...`（row index）。
+   - 为booster提供一种简单方式来建模global trends。
 
-2. **Fourier 特征**（周期模式）
+2. **Fourier features**（cyclical patterns）
    - 两个固定周期（单位为“行数”）：
-     - 周期 24（例如小时级数据中的 24 小时）
-     - 周期 168（例如 7 天 × 24 小时）
-   - 对每个周期 `P`，计算：
+     - Period 24（例如hourly data中的24 hours）
+     - Period 168（例如7 days × 24 hours）
+   - 对每个period `P`计算：
      - `sin(2πt / P)`
      - `cos(2πt / P)`
-   - 这是将季节性/周期嵌入为树模型仍能利用的形式的一种标准方法。
+   - 这是把seasonality/cycles嵌入到tree models仍可利用的形式中的标准方法。
 
-每个时间步 `t` 的最终特征向量为：
+每个time step `t`的最终feature vector为：
 
 ```text
 [ exogenous features (current, lags, diff, rolling mean for each series),
@@ -333,15 +340,15 @@ XGBoost pipeline 将输入视为一个小型多变量时间序列：
   time index, sin/cos(2πt/24), sin/cos(2πt/168) ]
 ```
 
-### 未来步骤特征向量 (lastFeatureRow)
-使用相同的特征构建逻辑，为 t + 1（提前一步预测）生成特征向量：
-- 从概念上讲，我们把下一个时间索引视为 t_next = n，其中 n 是已观测行数。
-- 对于 t_next 时每个序列的“当前”值，复用最后一个观测值（index n - 1）。
-- 滞后项和滚动均值使用观测数据最后 MAX_LAG / ROLLING_WINDOW 个步骤计算。
-- 时间编码使用 t_next 作为时间索引。
-- 这样得到一个单独的特征向量 lastFeatureRow，它基于直到最后一个观测为止的全部历史来表示下一时间步。
+### Future-step feature vector (lastFeatureRow)
+同样的feature-building logic也用于为`t + 1`（one-step-ahead prediction）生成feature vector：
+- 从概念上讲，将下一个time index视为`t_next = n`，其中`n`是observed rows的数量。
+- 对`t_next`处每个series的“current”值，重复使用最后一个observed value（index `n - 1`）。
+- lag和rolling mean使用observed data最后的`MAX_LAG` / `ROLLING_WINDOW` steps计算。
+- time encoding使用`t_next`作为time index。
+- 这样得到单个feature vector `lastFeatureRow`，它基于直到最后一个observation为止的全部history来表示下一个time step。
 
-因此，buildFeatures 函数返回：
+因此，`buildFeatures` function返回：
 ```text
 {
   X: number[][];        // feature matrix for all observed steps
@@ -353,7 +360,7 @@ XGBoost pipeline 将输入视为一个小型多变量时间序列：
 ---
 
 
-## 🚀 快速开始
+## 🚀 开始使用
 
 ### 1. 前置条件
 - [Docker Compose](https://docs.docker.com/compose/)
@@ -382,24 +389,24 @@ frontend_test
 
 ## AirPassengers Benchmark
 
-关于公平的 16 步评估协议和论文比较规则，请参阅 [`BENCHMARKS.md`](./BENCHMARKS.md)。
+有关公平的16-step protocol和paper-comparison rules，请参阅[`BENCHMARKS.md`](./BENCHMARKS.md)。
 
-该仓库包含 AirPassengers 数据集以及一个 benchmark 命令，用于在经典月度时间序列数据集上检查模型行为。
+repository包含AirPassengers dataset，以及一个用于在经典月度time-series dataset上检查model behavior的benchmark command。
 
-使用 Docker Compose 运行 benchmark：
+使用Docker Compose运行benchmark：
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
 ```
 
-JSON 输出：
+JSON output：
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
   node scripts/benchmark-air-passengers.mjs --json
 ```
 
-季节性 naive 基线：
+Seasonal naive baseline：
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
@@ -407,16 +414,16 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 ```
 
 
-### 16 步 holdout benchmark
+### 16-step holdout benchmark
 
-以下结果对所有可比较模型采用相同的固定起点评估协议：
+以下结果对每个可比较model使用完全相同的fixed-origin evaluation protocol：
 
-- 训练：AirPassengers 的前 128 个观测值
-- holdout：接下来的 16 个观测值
-- 预测期间不会将任何 holdout 目标值反馈给模型
-- 通用点预测指标：MAE、RMSE、MAPE、sMAPE 和 MASE
+- train：前128个AirPassengers observations
+- holdout：接下来的16个observations
+- forecasting过程中不会把任何holdout target value反馈进去
+- 通用point metrics：MAE、RMSE、MAPE、sMAPE和MASE
 
-使用以下命令复现 benchmark：
+使用以下命令复现benchmark：
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm \
@@ -427,31 +434,76 @@ docker compose -f docker-compose.test.yml run --rm \
   '
 ```
 
-测量结果：
+仅LightGBM的AirPassengers evaluation：
 
-| 模型 | 训练 | 预测范围 | MAE | RMSE | MAPE | sMAPE | MASE |
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_air_passengers_benchmark
+```
+
+这会使用`--algorithm lightgbm`运行同一个128/16 fixed-origin protocol，因此结果可以与其他AirPassengers rows直接比较。
+
+此前测得的结果（该table早于LightGBM集成；运行上面的LightGBM-only command可以生成当前LightGBM row）：
+
+| Model | Train | Horizon | MAE | RMSE | MAPE | sMAPE | MASE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | seasonal-naive | 128 | 16 | 64.2500 | 68.0808 | 14.1651% | 15.4031% | 2.1748 |
 | xgboost | 128 | 16 | 24.5775 | 29.5014 | 5.5687% | 5.3717% | 0.8319 |
+| LightGBM WASM | 128 | 16 | 21.0028 | 26.9474 | 4.4133% | 4.4352% | 0.7109 |
 | Chronos-2-small INT8 ONNX | 128 | 16 | **14.7839** | **17.3376** | **3.2438%** | **3.2636%** | **0.5004** |
 | VARMA experimental | 128 | 16 | N/A | N/A | N/A | N/A | N/A |
 
-在这个 16 步 AirPassengers holdout 中，Chronos-2-small INT8 ONNX 在所有报告的点预测指标上都取得了最低误差。这是应用层面的比较，而不是对 Chronos-2 论文聚合分数的直接复现。
+在这个16-step AirPassengers holdout中，Chronos-2-small INT8 ONNX在所有报告的point metric上都取得了最低error。这是application-level comparison，并不是对Chronos-2 paper中aggregate scores的直接复现。
 
-VARMA 被标记为 N/A，因为 AirPassengers 是单变量数据，而本仓库的实验性 VARMA 实现至少需要两个数值序列。关于多变量和论文比较协议，请参阅 [`BENCHMARKS.md`](./BENCHMARKS.md)。
+在同一protocol下，LightGBM WASM在所有报告的point metric上都优于XGBoost。
+
+VARMA显示为N/A，因为AirPassengers是univariate，而本repository的experimental VARMA implementation至少需要两个numeric series。有关multivariate和paper-comparison protocol，请参阅[`BENCHMARKS.md`](./BENCHMARKS.md)。
 
 
-### AirPassengers xgboost benchmark (120/24)
+## Multivariate LightGBM Benchmark
 
-#### csv: data/air_passengers.csv
-|  | 本实现 | seasonal-naive | 
-| -------- | -------- | -------- |
-| train_size | 120 | 120 | 
-| test_size | 24 | 24 | 
-| MAE | 43.6495 | 47.5833 | 
-| RMSE | 50.8508 | 49.9867 | 
-| MAPE | 9.5665% | 10.5227% | 
-| sMAPE | 9.5943% | 11.1666% | 
+repository还包含一个fixed-origin multivariate LightGBM evaluation，使用`data/sample_data.csv`，其中包含numeric series `ITEM_A`、`ITEM_B`和`ITEM_C`。
+
+默认情况下：
+
+- 最后16行作为holdout；
+- 之前的行作为training/context window；
+- 每个numeric column都会作为target评估一次；
+- 其他numeric columns可以用于与browser app相同的engineered feature pipeline；
+- holdout中的任何numeric value都不会在recursive forecasting过程中反馈；
+- 非target series按应用的seasonal-continuation policy继续推进；
+- LightGBM与seasonal-naive baseline进行比较；
+- 对每个target以及macro mean报告MAE、RMSE、MAPE、sMAPE和MASE。
+
+使用Docker Compose运行：
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark
+```
+
+JSON output：
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs --json
+  '
+```
+
+只评估一个target：
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs \
+      --target ITEM_A --algorithm lightgbm --markdown
+  '
+```
 
 ---
 

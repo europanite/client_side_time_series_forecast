@@ -28,9 +28,7 @@
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-A Client-Side Browser-Based Time-Series Forecast Playground powered by XGBoost, an experimental VARMA-style model, and Chronos-2.
-
-The app loads a CSV or XLSX file, detects datetime and numeric columns, lets you choose a forecasting model, and visualizes both observed values and a 16-step forecast. Your data stays in your browser.
+A Client-Side Browser-Based Time-Series Forecast Playground powered by [XGBoost](https://xgboost.readthedocs.io/en/stable/), [LightGBM](https://lightgbm.readthedocs.io/), an experimental VARMA-style model, and [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
 ---
 
@@ -43,7 +41,7 @@ It helps small businesses predict tomorrow's orders.
 
 - Load CSV/XLSX time-series datasets in the browser
 - Select any numeric column as the forecast target
-- Choose among XGBoost, an experimental VARMA-style model, and pretrained Chronos-2
+- Choose among XGBoost, LightGBM, an experimental VARMA-style model, and pretrained Chronos-2
 - Train the selected model locally in the browser
 - Forecast the next 16 points and append them to the chart
 
@@ -55,13 +53,13 @@ Everything happens **inside your browser**. There is no backend API and no data 
 
 1. Open the GitHub Pages demo:  
    https://europanite.github.io/client_side_time_series_forecast/
-2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_dataa.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
+2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_data.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
 3. The app will:
    - Detect a **datetime-like column**
    - List available numeric columns
 4. Choose one numeric column as the **target**.
-5. Choose a **forecast model**. `XGBoost` is the default, `VARMA experimental` is a lightweight multivariate baseline, and `Chronos-2 pretrained` is a zero-shot foundation model.
-6. For XGBoost or VARMA, click **Train** first. Chronos-2 is already pretrained and does not require local training. Then click **Forecast +16** to predict the next 16 points.
+5. Choose a **forecast model**. `XGBoost` is the default, `LightGBM` is an alternative locally trained GBDT, `VARMA experimental` is a lightweight multivariate baseline, and `Chronos-2 pretrained` is a zero-shot foundation model.
+6. For XGBoost, LightGBM, or VARMA, click **Train** first. Chronos-2 is already pretrained and does not require local training. Then click **Forecast +16** to predict the next 16 points.
 7. Inspect the chart to compare the observed series and the forecast line.
 
 ---
@@ -84,29 +82,31 @@ Used as the time axis but not converted directly to numeric features.
 
 ##### One or more numeric columns
 These columns are used as the target and/or exogenous features.
-The app supports two forecasting modes:
+The app supports three locally fitted forecasting modes:
 
 - **XGBoost**: you pick one numeric column as the target, and other numeric columns are used as additional signals.
+- **LightGBM**: uses the same target and engineered multivariate features as XGBoost, but fits a LightGBM regressor.
 - **VARMA experimental**: all numeric columns are modeled together, and the selected target column is displayed as the forecast output.
 
 ---
 
 ## Forecasting Approach
 
-The project exposes three forecasting algorithms with deliberately different
+The project exposes four forecasting algorithms with deliberately different
 assumptions:
 
 | Model | Learning style | Uses multiple input series? | Local training? | Forecast style |
 | --- | --- | --- | --- | --- |
 | XGBoost | Gradient-boosted decision-tree regression over engineered time-series features | Yes | Yes | Recursive one-step forecasting |
+| LightGBM | Histogram-based gradient-boosted decision-tree regression over the same engineered features as XGBoost | Yes | Yes | Recursive one-step forecasting |
 | VARMA experimental | Linear multi-output autoregression with ridge regularization, residual correction, and seasonal stabilization | Yes, jointly | Yes | Recursive multi-output forecasting |
 | Chronos-2-small INT8 ONNX | Pretrained patch-based time-series foundation model | Selected target only in the current UI | No | Direct probabilistic multi-step forecasting |
 
-These models should not be interpreted as three implementations of the same
-algorithm. XGBoost converts the time series into a supervised tabular-learning
-problem, VARMA models lagged vectors of several series jointly, and Chronos-2
-uses a pretrained neural forecasting model without fitting new parameters to
-the uploaded dataset.
+These models should not be interpreted as four implementations of the same
+algorithm. XGBoost and LightGBM convert the time series into the same supervised
+tabular-learning problem, VARMA models lagged vectors of several series jointly,
+and Chronos-2 uses a pretrained neural forecasting model without fitting new
+parameters to the uploaded dataset.
 
 ### Model selection
 
@@ -150,6 +150,22 @@ constant.
 
 Use XGBoost when you want a lightweight, locally trained nonlinear model that
 can exploit relationships among several numeric columns.
+
+#### LightGBM
+
+`LightGBM` is a second locally trained gradient-boosted decision-tree model.
+The browser implementation uses `@wlearn/lightgbm`, a WebAssembly build of
+LightGBM, and intentionally reuses the same `buildFeatures()` output and
+16-step recursive forecasting path as XGBoost.
+
+The default LightGBM configuration uses regression, learning rate 0.1,
+31 leaves, max depth 4, subsample 0.8, and 200 boosting rounds. The raw tree
+prediction is blended with the same seasonal continuation estimate used by
+XGBoost.
+
+Use LightGBM when you want a directly comparable histogram-based GBDT
+alternative while keeping the feature pipeline and application-level forecast
+protocol fixed.
 
 #### VARMA experimental
 
@@ -243,29 +259,33 @@ measured values and evaluation protocol.
 ### 16-step forecast
 
 The application-level default horizon is 16 because the integrated Chronos-2
-ONNX model uses 16-point patches, and the XGBoost and VARMA APIs are aligned to
-the same horizon for comparison.
+ONNX model uses 16-point patches, and the XGBoost, LightGBM, and VARMA APIs are
+aligned to the same horizon for comparison.
 
 The algorithms reach those 16 points differently:
 
 - **XGBoost** predicts recursively. Each predicted target value becomes part of
   the history for the next step, while non-target context is also advanced.
+- **LightGBM** uses the same engineered feature pipeline and recursive
+  application-level forecast policy as XGBoost.
 - **VARMA experimental** predicts a complete multivariate vector recursively
   and feeds that predicted vector into the next step.
 - **Chronos-2** performs direct multi-step probabilistic inference and returns
   the first 16 future positions from the pretrained model output.
 
-This difference matters when comparing the models: XGBoost and VARMA can
-accumulate recursive forecast error, whereas Chronos-2 generates the requested
-future sequence directly.
+This difference matters when comparing the models: XGBoost, LightGBM, and
+VARMA can accumulate recursive forecast error, whereas Chronos-2 generates the
+requested future sequence directly.
 
 ---
 
-## Feature Engineering (XGBoost)
+## Feature Engineering (XGBoost / LightGBM)
 
-The hand-engineered features in this section apply to the XGBoost pipeline. VARMA uses normalized lag vectors directly, while Chronos-2 operates on the selected target sequence without these features.
+The hand-engineered features in this section apply to both the XGBoost and
+LightGBM pipelines. VARMA uses normalized lag vectors directly, while Chronos-2
+operates on the selected target sequence without these features.
 
-The XGBoost pipeline treats the input as a small multi-variate time series:
+The tree-boosting pipelines treat the input as a small multi-variate time series:
 
 - One *datetime-like* column (header contains `date` or `time` in any case).
 - Several numeric columns (e.g., `item_a`, `item_b`, `item_c`, ...).
@@ -473,12 +493,25 @@ docker compose -f docker-compose.test.yml run --rm \
   '
 ```
 
-Measured results:
+LightGBM-only AirPassengers evaluation:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_air_passengers_benchmark
+```
+
+This runs the same 128/16 fixed-origin protocol with
+`--algorithm lightgbm`, so the result is directly comparable with the other
+AirPassengers rows.
+
+Previously measured results (the table predates the LightGBM integration;
+run the LightGBM-only command above to produce the current LightGBM row):
 
 | Model | Train | Horizon | MAE | RMSE | MAPE | sMAPE | MASE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | seasonal-naive | 128 | 16 | 64.2500 | 68.0808 | 14.1651% | 15.4031% | 2.1748 |
 | xgboost | 128 | 16 | 24.5775 | 29.5014 | 5.5687% | 5.3717% | 0.8319 |
+| LightGBM WASM | 128 | 16 | 21.0028 | 26.9474 | 4.4133% | 4.4352% | 0.7109 |
 | Chronos-2-small INT8 ONNX | 128 | 16 | **14.7839** | **17.3376** | **3.2438%** | **3.2636%** | **0.5004** |
 | VARMA experimental | 128 | 16 | N/A | N/A | N/A | N/A | N/A |
 
@@ -487,23 +520,63 @@ the lowest error on every reported point metric. This is an application-level
 comparison, not a direct reproduction of aggregate scores from the Chronos-2
 paper.
 
+Under the same protocol, LightGBM WASM outperformed XGBoost on every reported
+point metric.
+
 VARMA is reported as N/A because AirPassengers is univariate while this
 repository's experimental VARMA implementation requires at least two numeric
 series. See [`BENCHMARKS.md`](./BENCHMARKS.md) for the multivariate and
 paper-comparison protocol.
 
 
-### AirPassengers xgboost benchmark (120/24)
+## Multivariate LightGBM Benchmark
 
-#### csv: data/air_passengers.csv
-|  | This Work | seasonal-naive | 
-| -------- | -------- | -------- |
-| train_size | 120 | 120 | 
-| test_size | 24 | 24 | 
-| MAE | 43.6495 | 47.5833 | 
-| RMSE | 50.8508 | 49.9867 | 
-| MAPE | 9.5665% | 10.5227% | 
-| sMAPE | 9.5943% | 11.1666% | 
+The repository also includes a fixed-origin multivariate LightGBM evaluation
+using `data/sample_data.csv`, which contains the numeric series `ITEM_A`,
+`ITEM_B`, and `ITEM_C`.
+
+By default:
+
+- the final 16 rows are the holdout;
+- the preceding rows are the training/context window;
+- each numeric column is evaluated once as the target;
+- the other numeric columns are available to the same engineered feature
+  pipeline used by the browser app;
+- no numeric value from the holdout is fed back during recursive forecasting;
+- non-target series are advanced with the application's seasonal-continuation
+  policy;
+- LightGBM is compared with a seasonal-naive baseline;
+- MAE, RMSE, MAPE, sMAPE, and MASE are reported per target and as macro means.
+
+Run it with Docker Compose:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark
+```
+
+JSON output:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs --json
+  '
+```
+
+Evaluate one target only:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs \
+      --target ITEM_A --algorithm lightgbm --markdown
+  '
+```
 
 ---
 

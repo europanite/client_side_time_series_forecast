@@ -23,32 +23,30 @@
   <a href="./README.fr.md">🇫🇷 Français</a>
 </p>
 
-> **翻訳版について:** このREADMEは英語版から翻訳されたものです。内容に相違がある場合は、英語版の `README.md` を正本とします。
-
 !["web_ui"](./assets/images/web_ui.png)
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-XGBoost、実験的なVARMAスタイルのモデル、Chronos-2を利用する、クライアントサイド・ブラウザベースの時系列予測Playgroundです。
+XGBoost、LightGBM、実験的なVARMA風モデル、Chronos-2を使用した、クライアントサイドかつブラウザベースの時系列予測プレイグラウンドです。
 
-このアプリはCSVまたはXLSXファイルを読み込み、日時列と数値列を検出し、予測モデルを選択できるようにし、観測値と16ステップ先の予測の両方を可視化します。データはブラウザ内に保持されます。
+このアプリはCSVまたはXLSXファイルを読み込み、datetime列と数値列を検出し、予測モデルを選択できるようにします。観測値と16ステップ先の予測を可視化し、データはブラウザ内に保持されます。
 
 ---
 
 ## 概要
 
-これは、Webブラウザ内だけで完全に動作する多変量時系列予測ツールです。
+これはWebブラウザだけで完全に動作する多変量時系列予測ツールです。
 インストール、登録、支払いは不要です。 
-ブラウザからアクセスするだけですぐに利用できます。
-小規模事業者が翌日の注文数を予測するのに役立ちます。
+ブラウザでアクセスするだけですぐに利用できます。
+小規模事業者が翌日の注文数を予測する用途を想定しています。
 
-- ブラウザでCSV/XLSX時系列データセットを読み込む
+- ブラウザでCSV/XLSX形式の時系列データセットを読み込む
 - 任意の数値列を予測対象として選択する
-- XGBoost、実験的なVARMAスタイルのモデル、事前学習済みChronos-2から選択する
-- 選択したモデルをブラウザ内でローカル学習する
-- 次の16点を予測してチャートに追加する
+- XGBoost、LightGBM、実験的なVARMA風モデル、事前学習済みChronos-2から選択する
+- 選択したモデルをブラウザ内でローカルに学習する
+- 次の16ポイントを予測し、チャートに追加する
 
-すべての処理は**ブラウザ内**で行われます。バックエンドAPIはなく、データが端末外へ送信されることもありません。
+すべての処理は**ブラウザ内**で行われます。バックエンドAPIはなく、データがマシンの外に送信されることもありません。
 
 ---
 
@@ -56,13 +54,13 @@ XGBoost、実験的なVARMAスタイルのモデル、Chronos-2を利用する�
 
 1. GitHub Pagesのデモを開きます:  
    https://europanite.github.io/client_side_time_series_forecast/
-2. [`data/sample_data.csv`](./data/datsample_dataa.csv) または [`data/sample_data.xlsx`](./data/sample_data.xlsx) などのサンプルファイルをアップロードします。
+2. [`data/sample_data.csv`](./data/datsample_data.csv) または [`data/sample_data.xlsx`](./data/sample_data.xlsx) などのサンプルファイルをアップロードします。
 3. アプリは次の処理を行います:
-   - **日時らしい列**を検出する
+   - **datetimeらしい列**を検出する
    - 利用可能な数値列を一覧表示する
-4. 1つの数値列を**予測対象**として選択します。
-5. **予測モデル**を選択します。`XGBoost` がデフォルトで、`VARMA experimental` は軽量な多変量ベースライン、`Chronos-2 pretrained` はゼロショットの基盤モデルです。
-6. XGBoostまたはVARMAでは、最初に **Train** をクリックします。Chronos-2はすでに事前学習済みで、ローカル学習は不要です。次に **Forecast +16** をクリックして、次の16点を予測します。
+4. 1つの数値列を**target**として選択します。
+5. **forecast model**を選択します。`XGBoost`がデフォルト、`LightGBM`はローカル学習する代替GBDT、`VARMA experimental`は軽量な多変量ベースライン、`Chronos-2 pretrained`はzero-shot foundation modelです。
+6. XGBoost、LightGBM、VARMAでは、最初に**Train**をクリックします。Chronos-2は事前学習済みなのでローカル学習は不要です。その後、**Forecast +16**をクリックして次の16ポイントを予測します。
 7. チャートを確認し、観測系列と予測線を比較します。
 
 ---
@@ -79,254 +77,261 @@ datetime,item_a,item_b,item_c,...
 
 ### 要件:
 
-##### 日時らしい列が1つ
-列ヘッダーに "date" または "time" が含まれていること（大文字小文字を区別しません）。
-時間軸として使用されますが、直接数値特徴量には変換されません。
+##### datetimeらしい列が1つ
+列ヘッダーに"date"または"time"を含めます（大文字・小文字は区別しません）。
+時間軸として使用しますが、直接数値特徴量には変換しません。
 
-##### 1つ以上の数値列
-これらの列は、予測対象および／または外生特徴量として使用されます。
-アプリは2つの予測モードをサポートします:
+##### 数値列が1つ以上
+これらの列はtargetおよび／または外生特徴量として使用されます。
+アプリは、ローカルでフィットする3つの予測モードをサポートしています:
 
-- **XGBoost**: 1つの数値列を予測対象として選択し、その他の数値列を追加シグナルとして使用します。
-- **VARMA experimental**: すべての数値列をまとめてモデル化し、選択した予測対象列を予測出力として表示します。
+- **XGBoost**: 1つの数値列をtargetとして選択し、その他の数値列を追加シグナルとして使用します。
+- **LightGBM**: XGBoostと同じtargetおよび設計済み多変量特徴量を使用しますが、LightGBM regressorをフィットします。
+- **VARMA experimental**: すべての数値列をまとめてモデル化し、選択したtarget列を予測出力として表示します。
 
 ---
 
 ## 予測アプローチ
 
-このプロジェクトでは、意図的に異なる前提を持つ3つの予測アルゴリズムを提供しています:
+このプロジェクトでは、意図的に異なる前提を持つ4つの予測アルゴリズムを提供しています:
 
-| モデル | 学習方式 | 複数の入力系列を使用? | ローカル学習? | 予測方式 |
+| モデル | 学習方式 | 複数の入力系列を使用するか | ローカル学習 | 予測方式 |
 | --- | --- | --- | --- | --- |
-| XGBoost | 設計した時系列特徴量に対する勾配ブースティング決定木回帰 | はい | はい | 再帰的1ステップ予測 |
-| VARMA experimental | リッジ正則化、残差補正、季節安定化を備えた線形多出力自己回帰 | はい、同時に | はい | 再帰的多出力予測 |
-| Chronos-2-small INT8 ONNX | 事前学習済みのパッチベース時系列基盤モデル | 現在のUIでは選択した予測対象のみ | いいえ | 直接的な確率的多ステップ予測 |
+| XGBoost | 設計済み時系列特徴量に対する勾配ブースティング決定木回帰 | はい | はい | 再帰的な1ステップ予測 |
+| LightGBM | XGBoostと同じ設計済み特徴量に対するヒストグラムベース勾配ブースティング決定木回帰 | はい | はい | 再帰的な1ステップ予測 |
+| VARMA experimental | ridge正則化、残差補正、季節安定化を伴う線形multi-output自己回帰 | はい、同時に | はい | 再帰的multi-output予測 |
+| Chronos-2-small INT8 ONNX | 事前学習済みpatch-based時系列foundation model | 現在のUIでは選択したtargetのみ | いいえ | 直接的な確率的multi-step予測 |
 
-これらのモデルを、同一アルゴリズムの3つの実装と解釈すべきではありません。XGBoostは時系列を教師あり表形式学習の問題へ変換し、VARMAは複数系列のラグ付きベクトルを同時にモデル化し、Chronos-2はアップロードされたデータセットに対して新しいパラメータを学習することなく、事前学習済みニューラル予測モデルを使用します。
+これらのモデルを、同一アルゴリズムの4つの実装と解釈すべきではありません。XGBoostとLightGBMは時系列を同じ教師あり表形式学習問題に変換し、VARMAは複数系列のlagged vectorを同時にモデル化します。Chronos-2は、アップロードしたデータセットに新しいパラメータをフィットせず、事前学習済みのニューラル予測モデルを使用します。
 
 ### モデル選択
 
 #### XGBoost
 
-`XGBoost` はデフォルトのローカル学習モデルです。XGBoostは勾配ブースティング決定木アルゴリズムで、多数の決定木を順番に追加し、それぞれの新しい木がそれまでのアンサンブルに残った誤差を減らします。時系列はXGBoostへ直接入力されません。このプロジェクトでは、まず各時点を特徴ベクトルへ変換し、その後XGBoostを回帰モデルとして学習します。
+`XGBoost`はデフォルトのローカル学習モデルです。XGBoostはgradient-boosted decision-tree algorithmで、多数のdecision treeを順番に追加し、それぞれの新しいtreeが以前のensembleに残った誤差を減らします。時系列をXGBoostへ直接渡すわけではありません。このプロジェクトでは、まず各time stepをfeature vectorへ変換し、その後XGBoostを回帰モデルとして学習します。
 
 ブラウザ実装では次を使用します:
 
-- `MAX_LAG = 3` までの予測対象および外生系列のラグ
-- 1階差分
-- `ROLLING_WINDOW = 7` の移動平均
-- 数値系列間の差、比率、積の相互作用
-- 時間インデックス
-- 周期24および168のフーリエ特徴量
-- 深さ4、学習率0.1、subsample 0.8、200回のブースティング反復を設定した `gbtree`
+- `MAX_LAG = 3`までのtargetおよび外生系列のlag
+- first difference
+- `ROLLING_WINDOW = 7`のrolling mean
+- 数値系列間のspread、ratio、product interaction
+- time index
+- 周期24と168のFourier feature
+- depth 4、learning rate 0.1、subsample 0.8、200 boosting iterationsの`gbtree`
 
-16ステップ予測では、モデルは1ステップずつ予測します。各予測値は作業用履歴へ追加され、そのため次のステップで利用できます。XGBoostの生の予測値は、季節的継続の推定値ともブレンドされます。予測対象以外の数値コンテキストは固定せず、先へ進めます。
+16-step forecastでは、モデルは1ステップずつ予測します。各予測値は作業用historyに追加されるため、次のstepで利用できます。生のXGBoost予測値はseasonal continuation estimateともblendされます。target以外のnumeric contextも固定せずに先へ進めます。
 
 **長所**
 
-- 系列間の非線形関係や相互作用を捉えられる
-- このプロジェクトで手作業設計された多変量特徴量と自然に組み合わせられる
-- ブラウザ内でローカルに、比較的短時間で学習できる
-- 大規模な事前学習済みモデルのダウンロードが不要
+- 系列間の非線形関係とinteractionを捉えられる
+- プロジェクトのhand-engineered multivariate featuresと自然に組み合わせられる
+- ブラウザ内でローカルに、比較的高速に学習できる
+- 大規模な事前学習済みモデルをダウンロードする必要がない
 
 **制約**
 
-- 予測品質が選択した特徴量設計に依存する
-- 再帰的予測では後半のステップほど誤差が蓄積する可能性がある
-- 固定されたフーリエ周期と季節的継続は、自動的に学習されたカレンダー構造ではなく、アプリケーションレベルの仮定である
+- 予測品質は選択したfeature engineeringに依存する
+- 再帰予測では後半のstepほど誤差が蓄積する可能性がある
+- 固定Fourier周期とseasonal continuationは自動学習されたcalendar structureではなく、application-levelの仮定である
 
-複数の数値列の関係を活用できる、軽量でローカル学習可能な非線形モデルが必要な場合はXGBoostを使用してください。
+複数の数値列間の関係を利用できる、軽量でローカル学習型の非線形モデルが必要な場合はXGBoostを使用してください。
+
+#### LightGBM
+
+`LightGBM`は2つ目のローカル学習型gradient-boosted decision-tree modelです。ブラウザ実装ではLightGBMのWebAssembly buildである`@wlearn/lightgbm`を使用し、意図的にXGBoostと同じ`buildFeatures()` outputおよび16-step recursive forecasting pathを再利用します。
+
+デフォルトのLightGBM設定では、regression、learning rate 0.1、31 leaves、max depth 4、subsample 0.8、200 boosting roundsを使用します。生のtree predictionは、XGBoostと同じseasonal continuation estimateとblendされます。
+
+feature pipelineとapplication-level forecast protocolを固定したまま、直接比較可能なhistogram-based GBDT alternativeが必要な場合はLightGBMを使用してください。
 
 #### VARMA experimental
 
-`VARMA experimental` は軽量なブラウザネイティブの多変量ベースラインです。名称に反して、この実装は**統計的な完全最尤VARMA推定器ではありません**。小さな残差補正と明示的な季節安定化を備えた、正則化VARスタイルのモデルに近いものです。
+`VARMA experimental`は、軽量でbrowser-nativeな多変量ベースラインです。名前とは異なり、この実装は**完全な統計的maximum-likelihood VARMA estimatorではありません**。小さなresidual correctionと明示的なseasonal stabilizationを備えた、regularized VAR-style modelに近いものです。
 
 実装は次のとおりです:
 
-1. 最大8個の数値系列を選択し、標準化する;
-2. 直前7個の多変量ベクトルを連結してラグ特徴ベクトルを作る;
-3. 多出力リッジ回帰ですべての出力系列を同時に適合させる
-   (`ridge = 1e-2`);
-4. 最近の残差から小さな補正を推定する (`maLag = 1`);
-5. 予測時に、自己回帰出力を季節ラグのベクトルとブレンドする
-   (`seasonalLag = 7`, `seasonalBlend = 0.55`);
-6. 予測したベクトルを次の予測ステップへ再帰的に入力する。
+1. 最大8個の数値系列を選択して標準化する;
+2. 過去7個の多変量vectorを連結してlag feature vectorを作る;
+3. multi-output ridge regression（`ridge = 1e-2`）で全出力系列を同時にフィットする;
+4. 最近のresidualから小さな補正を推定する（`maLag = 1`）;
+5. 予測時にautoregressive outputとseasonal lagのvectorをblendする（`seasonalLag = 7`, `seasonalBlend = 0.55`）;
+6. 予測したvectorを再帰的に次のforecast stepへ入力する。
 
-各ステップで完全な数値ベクトルを予測するため、VARMAは選択した予測対象だけを予測するのではなく、モデル化されたすべての系列をまとめて先へ進めます。
+各stepで完全なnumeric vectorを予測するため、VARMAは選択したtargetだけを予測するのではなく、モデル化したすべての系列をまとめて進めます。
 
 **長所**
 
 - 単純で計算コストが低い
-- 複数の数値系列を同時にモデル化する
-- XGBoostやChronos-2と比較するための有用な線形／古典的スタイルのベースラインを提供する
-- 別途モデルをダウンロードせず、完全にTypeScriptで動作する
+- 複数の数値系列を同時にモデル化できる
+- XGBoostやChronos-2に対する有用なlinear/classical-style baselineになる
+- 別のモデルダウンロードなしにTypeScriptだけで動作する
 
 **制約**
 
-- 少なくとも2つの数値系列と、利用可能な行が7行を超えて必要
-- 主に線形なラグ関係を仮定する
-- 残差補正と季節ブレンディングは実用的な安定化処理であり、完全な移動平均推定手順ではない
-- 統計的VARMAの参照実装として提示すべきではない
+- 少なくとも2つの数値系列と、7行を超える利用可能なデータが必要
+- 主に線形なlag関係を仮定する
+- residual correctionとseasonal blendingは実用的なstabilizerであり、完全なmoving-average estimation procedureではない
+- 統計的VARMAのreference implementationとして提示すべきではない
 
-複数の系列が連動して動く場合に、透明性の高い多変量ベースラインとして主に `VARMA experimental` を使用してください。
+複数系列が連動して動く場合の透明性の高い多変量ベースラインとして、主に`VARMA experimental`を使用してください。
 
 #### Chronos-2 pretrained
 
-`Chronos-2 pretrained` は、上記2つのローカル適合モデルとは根本的に異なります。Chronos-2は事前学習済みのパッチベース時系列基盤モデルで、直接的な多ステップの**分位点予測**を生成します。このリポジトリでは `Chronos-2-small INT8` をONNX Runtime WebでONNXモデルとして実行するため、モデルをダウンロードした後の推論はローカルで行われます。
+`Chronos-2 pretrained`は、上記のローカルフィット型モデルとは根本的に異なります。Chronos-2は事前学習済みのpatch-based time-series foundation modelで、直接multi-stepの**quantile forecasts**を生成します。このrepositoryでは`Chronos-2-small INT8`をONNX Runtime Web上のONNX modelとして実行するため、モデルのダウンロード後はローカルでinferenceが行われます。
 
 現在のブラウザ統合では:
 
-- アップロードされたデータセットでは**学習しない**;
-- Chronosのコンテキストとして選択した予測対象系列のみを使用する;
-- 少なくとも16個の数値予測対象観測値が必要;
-- コンテキスト観測値は最大5,760個まで保持する;
-- 入力を16点のパッチにまとめ、不完全な最初のパッチは左側を `NaN` でパディングする;
-- ONNXグラフ内部の672ステップ出力
-  (`42 × 16`) を実行し、最初の16ステップをUIに公開する;
-- モデルの分位点出力を読み取り、中央値 (`p50`) の予測を
-  `p10` および `p90` の不確実性境界とともに表示する。
+- アップロードしたデータセットでは**学習しない**;
+- Chronos contextとして選択したtarget seriesのみを使用する;
+- 16個以上のnumeric target observationsが必要;
+- 最大5,760個のcontext observationsを保持する;
+- 入力を16-point patchesへ分割し、不完全な先頭patchの左側を`NaN`でpaddingする;
+- ONNX graph内部の672-step output（`42 × 16`）を実行し、その先頭16 stepsをUIに公開する;
+- モデルのquantile outputを読み取り、median（`p50`）forecastと`p10`、`p90`のuncertainty boundsを表示する。
 
-Chronos-2自体は、より豊かな多変量予測や共変量情報を利用した予測をサポートしていますが、**現在のUIではまだこれらの機能を使用していません**。したがって、現状のChronos実装は、多変量アプリケーションの中で動作する事前学習済みの単変量予測対象フォーキャスターとして理解してください。
+Chronos-2自体は、より高度なmultivariate forecastingやcovariate-informed forecastingをサポートしていますが、**現在のUIではまだそれらの機能を使用していません**。したがって、現状のChronos実装は、多変量アプリケーション内に組み込まれた事前学習済み単変量target forecasterとして理解するのが適切です。
 
 **長所**
 
-- ゼロショット予測: データセットごとのモデル適合が不要
-- 1ステップモデルを再帰的に適合する代わりに、予測ホライズン全体を直接予測する
-- 予測分位点を通じて確率的情報を提供する
-- 大規模事前学習で学んだパターンを新しい系列へ転移できる
+- zero-shot forecasting: データセットごとのmodel fittingが不要
+- 1-step modelを再帰的にフィットするのではなく、forecast horizon全体を直接予測する
+- forecast quantileを通じて確率的情報を提供する
+- 大規模事前学習で獲得したpatternを新しいseriesへ転移できる
 
 **制約**
 
 - 初回利用前にモデルをダウンロードする必要がある
-- ブラウザではINT8 ONNXエクスポートを使用するため、結果が完全精度の公式チェックポイントと完全には一致しない場合がある
+- ブラウザではINT8 ONNX exportを使用するため、結果がfull-precision official checkpointと完全に一致するとは限らない
 - 現在のUIではChronos-2呼び出し時に追加の数値列を無視する
-- ブラウザメモリとWASM実行により、モデルサイズとコンテキスト長に実用上の制約がある
+- browser memoryとWASM executionにより、model sizeとcontext lengthに実用上の制限がある
 
-このリポジトリの現在のAirPassengers 128/16ホールドアウトベンチマークでは、`Chronos-2-small INT8 ONNX` が比較可能なモデルの中でMAE、RMSE、MAPE、sMAPE、MASEのすべてについて最小値を達成しました。測定値と評価プロトコルは下記のベンチマーク節を参照してください。
+repositoryの現在のAirPassengers 128/16 holdout benchmarkでは、`Chronos-2-small INT8 ONNX`が比較可能なモデルの中でMAE、RMSE、MAPE、sMAPE、MASEのすべてで最小値を達成しました。測定値とevaluation protocolは下のbenchmark sectionを参照してください。
 
-### 16ステップ予測
+### 16-step forecast
 
-アプリケーションレベルのデフォルト予測ホライズンは16です。統合されたChronos-2 ONNXモデルが16点パッチを使用しており、比較のためXGBoostとVARMAのAPIも同じホライズンに揃えているためです。
+application-levelのデフォルトhorizonが16なのは、統合済みChronos-2 ONNX modelが16-point patchesを使用しており、比較のためXGBoost、LightGBM、VARMA APIも同じhorizonに揃えているためです。
 
-各アルゴリズムは異なる方法でその16点へ到達します:
+各アルゴリズムが16ポイントに到達する方法は異なります:
 
-- **XGBoost** は再帰的に予測します。予測された各予測対象値は次のステップの履歴の一部となり、予測対象以外のコンテキストも同時に先へ進みます。
-- **VARMA experimental** は完全な多変量ベクトルを再帰的に予測し、その予測ベクトルを次のステップへ入力します。
-- **Chronos-2** は直接的な多ステップ確率推論を行い、事前学習済みモデルの出力から将来位置の最初の16点を返します。
+- **XGBoost**は再帰的に予測します。予測された各target valueは次のstepのhistoryの一部になり、target以外のcontextも同時に進みます。
+- **LightGBM**はXGBoostと同じengineered feature pipelineおよびrecursive application-level forecast policyを使用します。
+- **VARMA experimental**は完全なmultivariate vectorを再帰的に予測し、その予測vectorを次のstepに入力します。
+- **Chronos-2**はdirect multi-step probabilistic inferenceを行い、事前学習済みmodel outputから最初の16 future positionsを返します。
 
-この違いはモデル比較で重要です。XGBoostとVARMAでは再帰的予測誤差が蓄積し得る一方、Chronos-2は要求された将来系列を直接生成します。
+この違いはモデル比較で重要です。XGBoost、LightGBM、VARMAはrecursive forecast errorが蓄積する可能性がありますが、Chronos-2は要求された未来系列を直接生成します。
 
 ---
 
-## 特徴量設計 (XGBoost)
+## Feature Engineering (XGBoost / LightGBM)
 
-この節の手作業で設計した特徴量はXGBoostパイプラインに適用されます。VARMAは正規化済みラグベクトルを直接使用し、Chronos-2はこれらの特徴量を使わず、選択された予測対象系列上で動作します。
+このsectionのhand-engineered featuresは、XGBoostとLightGBMの両方のpipelineに適用されます。VARMAはnormalized lag vectorsを直接使用し、Chronos-2はこれらのfeaturesを使わずに選択したtarget sequenceを処理します。
 
-XGBoostパイプラインは、入力を小規模な多変量時系列として扱います:
+tree-boosting pipelineは、入力を小規模なmulti-variate time seriesとして扱います:
 
-- 1つの*日時らしい*列（ヘッダーに大文字小文字を問わず `date` または `time` を含む）。
-- 複数の数値列（例: `item_a`, `item_b`, `item_c`, ...）。
-- 数値列の1つを予測する**予測対象**として選択する。
+- *datetime-like* columnが1つ（headerに大文字・小文字を問わず`date`または`time`を含む）。
+- 複数のnumeric columns（例: `item_a`, `item_b`, `item_c`, ...）。
+- numeric columnsの1つを、予測する**target**として選択する。
 
-内部では、特徴量ビルダーが各時点 `t` について**豊富な特徴ベクトル**を構築し、`t + 1` について**将来特徴ベクトル**を構築します。すべての特徴量はJavaScript/TypeScriptで、**完全にクライアント側**で計算されます。
+内部では、feature builderが各time step `t`について**rich feature vector**を構築し、`t + 1`について**future feature vector**を構築します。すべてのfeaturesはJavaScript/TypeScriptにより**完全にクライアント側**で計算されます。
 
 ### 特徴量に使用する系列
 
 - `datetimeKey`  
-  - `"date"` または `"time"` を含むヘッダーから自動検出されます。
-  - 時間軸の特定にのみ使用され、直接数値特徴量としては使用されません。
+  - `"date"`または`"time"`を含むheaderから自動検出されます。
+  - 時間軸を特定するためだけに使用し、直接numeric featureとしては使いません。
 - `targetKey`  
-  - ユーザーが予測対象として選択する数値列。
+  - ユーザーが予測対象として選択するnumeric columnです。
 - `featureKeys`  
-  - その他すべての数値列（非日時、非予測対象）。
-  - **外生系列**として扱われます。
+  - その他すべてのnumeric columns（non-datetime、non-target）です。
+  - **exogenous series**として扱います。
 
-内部では、系列ごとに1つの数値配列を持つ `seriesMap: Record<string, number[]>` を保持します。
+内部では、各seriesにつき1つのnumeric arrayを持つ`seriesMap: Record<string, number[]>`を保持します。
 
-### 系列ごとの特徴量（外生系列）
+### 系列ごとの特徴量（exogenous series）
 
-各外生系列 `x(t)`（`featureKeys` の各キー）と各時点 `t` について、次を計算します:
+各exogenous series `x(t)`（`featureKeys`の各key）と各time step `t`について、次を計算します:
 
 1. **同時点の値**
-   - `x(t)`（時刻インデックス `t` における値）。
+   - `x(t)`（time index `t`における値）。
 
-2. **ラグ特徴量（履歴）**
-   - `MAX_LAG = 3` まで:
+2. **Lag features（history）**
+   - `MAX_LAG = 3`まで:
      - `x(t - 1)`
      - `x(t - 2)`
      - `x(t - 3)`
-   - これにより、モデルは系列ごとの短期的な時間ダイナミクスを学習できます。
+   - これによりmodelは各seriesの短期的な時間ダイナミクスを学習できます。
 
-3. **1階差分**
+3. **First difference**
    - `x(t) - x(t - 1)`
-   - 絶対水準だけではなく、局所的変化（トレンド／傾き）を捉えます。
+   - 絶対レベルだけではなく、局所的な変化（trend / slope）を捉えます。
 
-4. **移動平均（局所平均）**
-   - `ROLLING_WINDOW = 7` 時点のローリングウィンドウ:
-     - `mean(x[t - 6 ... t])`（系列の先頭付近では短縮）
-   - 局所トレンド／基準水準を表し、短期ノイズを平滑化します。
+4. **Rolling mean（local average）**
+   - `ROLLING_WINDOW = 7` time stepsのrolling window:
+     - `mean(x[t - 6 ... t])`（series先頭付近では短縮）
+   - 局所trend / baseline levelを表し、短期noiseを平滑化します。
 
-> 系列がウィンドウより短い場合、コードは自動的にウィンドウを縮小し、`t` までに利用可能な過去の全点を使用します。
+> seriesがwindowより短い場合、codeはwindowを自動的に縮小し、`t`までに利用可能なすべての過去ポイントを使用します。
 
-### 予測対象系列の履歴
+### Target-series history
 
-**予測対象系列** `y(t)` 自体については、現在値 `y(t)` はそのステップのラベルであるため特徴量に**含めません**が、その履歴は含めます:
+**target series** `y(t)`自体については、現在値`y(t)`をfeatureには**含めません**（そのstepのlabelだからです）が、historyは含めます:
 
-1. **予測対象のラグ**
+1. **Target lags**
    - `y(t - 1)`
    - `y(t - 2)`
    - `y(t - 3)`
 
-2. **予測対象の差分**
+2. **Target difference**
    - `y(t) - y(t - 1)`
 
-3. **予測対象の移動平均**
-   - 上記と同じローリングウィンドウ:
+3. **Target rolling mean**
+   - 上と同じrolling window:
      - `mean(y[t - 6 ... t])`
 
-これによりモデルは、「次の値は直近数点とその局所トレンドに依存する」といった、時系列予測で典型的なパターンを学習できます。
+これにより、「次の値は直近いくつかの値とその局所trendに依存する」といった、time-series forecastingで典型的なpatternをmodelが学習できます。
 
-### 系列間相互作用
+### Cross-series interactions
 
-**異なる系列間の関係**を捉えるため、予測対象を含む**すべての数値系列のペア**について相互作用特徴量を構築します:
+**異なるseries間の関係**を捉えるため、targetを含む**すべてのnumeric seriesの組み合わせ**についてinteraction featuresを構築します:
 
-- `v_i(t)` と `v_j(t)` を、時点 `t` における2系列の同時点値とします。
-- `i < j` を満たす各順序付きペア `(i, j)` について、次を計算します:
+- `v_i(t)`と`v_j(t)`をtime `t`における2系列の同時点の値とします。
+- `i < j`を満たす各ordered pair `(i, j)`について、次を計算します:
 
-1. **差**
+1. **Spread**
    - `v_i(t) - v_j(t)`
-   - 系列間の相対的な水準差を表現します。
+   - series間の相対的なlevel差をencodeします。
 
-2. **比率**
+2. **Ratio**
    - `v_i(t) / v_j(t)`
-   - ゼロ除算を避けるため、必要に応じて分母に小さなepsilonを加えます:
+   - zero divisionを避けるため、必要であればdenominatorに小さなepsilonを入れます:
      - `denom = |v_j| < 1e-9 ? sign(v_j) * 1e-9 : v_j`
-   - 相対スケールと比例関係を表現します。
+   - 相対scaleと比例関係をencodeします。
 
-3. **積**
+3. **Product**
    - `v_i(t) * v_j(t)`
-   - 両方の系列が大きい、または小さいことが重要になる「相互作用効果」をモデルが表現できるようにします。
+   - 両系列が大きい／小さいこと自体が重要になる「interaction effects」をmodelが表現できるようにします。
 
-これらの系列間特徴量により、個別系列の値だけに依存するのではなく、**複数系列構造**をブースターへ明示的に提示します。
+これらのcross-series featuresにより、個々のseries valueだけに依存するのではなく、**multi-series structure**をboosterへ明示的に与えます。
 
-### 時間インデックスとフーリエ特徴量
+### Time indexとFourier features
 
-時間そのものも数値特徴量としてエンコードします:
+時間そのものもnumeric featuresとしてencodeします:
 
-1. **時間インデックス**
-   - 整数インデックス `t = 0, 1, 2, ...`（行インデックス）。
-   - ブースターが全体的なトレンドをモデル化するための単純な手段を提供します。
+1. **Time index**
+   - Integer index `t = 0, 1, 2, ...`（row index）。
+   - boosterがglobal trendsをモデル化するための単純な手段になります。
 
-2. **フーリエ特徴量**（周期パターン）
-   - 2つの固定周期（「行数」を単位とする）:
-     - 周期24（例: 1時間ごとのデータなら24時間）
-     - 周期168（例: 7日 × 24時間）
-   - 各周期 `P` について次を計算します:
+2. **Fourier features**（cyclical patterns）
+   - 「行数」を単位とする2つの固定period:
+     - Period 24（例: hourly dataなら24 hours）
+     - Period 168（例: 7 days × 24 hours）
+   - 各period `P`について次を計算します:
      - `sin(2πt / P)`
      - `cos(2πt / P)`
-   - これは、木モデルでも利用可能な形で季節性／周期を埋め込む標準的な方法です。
+   - tree modelでも利用できる形式でseasonality/cyclesを埋め込む標準的な方法です。
 
-各時点 `t` の最終特徴ベクトルは次のとおりです:
+各time step `t`の最終feature vectorは次のとおりです:
 
 ```text
 [ exogenous features (current, lags, diff, rolling mean for each series),
@@ -335,15 +340,15 @@ XGBoostパイプラインは、入力を小規模な多変量時系列として�
   time index, sin/cos(2πt/24), sin/cos(2πt/168) ]
 ```
 
-### 将来ステップの特徴ベクトル (lastFeatureRow)
-同じ特徴構築ロジックを使用して、t + 1（1ステップ先予測）の特徴ベクトルを生成します:
-- 概念上、次の時間インデックスを t_next = n とし、n は観測済み行数とします。
-- t_next における各系列の「現在」値には、最後に観測された値（index n - 1）を再利用します。
-- ラグと移動平均は、観測データの最後の MAX_LAG / ROLLING_WINDOW ステップを使用して計算します。
-- 時間エンコーディングには t_next を時間インデックスとして使用します。
-- これにより、最後の観測までの全履歴に基づいて次の時点を表す、単一の特徴ベクトル lastFeatureRow が得られます。
+### Future-step feature vector (lastFeatureRow)
+`t + 1`（one-step-ahead prediction）用のfeature vectorにも同じfeature-building logicを使用します:
+- 概念的には、次のtime indexを`t_next = n`とします。ここで`n`はobserved rowsの数です。
+- `t_next`での各seriesの「current」値には、最後に観測された値（index `n - 1`）を再利用します。
+- lagとrolling meanはobserved dataの最後の`MAX_LAG` / `ROLLING_WINDOW` stepsを使って計算します。
+- time encodingでは`t_next`をtime indexとして使用します。
+- これにより、最後のobservationまでの全historyに基づいて次のtime stepを表す単一のfeature vector `lastFeatureRow`が得られます。
 
-したがって、buildFeatures関数は次を返します:
+したがって`buildFeatures` functionは次を返します:
 ```text
 {
   X: number[][];        // feature matrix for all observed steps
@@ -360,7 +365,7 @@ XGBoostパイプラインは、入力を小規模な多変量時系列として�
 ### 1. 前提条件
 - [Docker Compose](https://docs.docker.com/compose/)
 
-### 2. すべてのサービスをビルドして起動:
+### 2. すべてのサービスをbuildして起動:
 
 ```bash
 
@@ -382,26 +387,26 @@ frontend_test
 
 ---
 
-## AirPassengers ベンチマーク
+## AirPassengers Benchmark
 
-公平な16ステップ評価プロトコルと論文比較のルールについては、[`BENCHMARKS.md`](./BENCHMARKS.md) を参照してください。
+公平な16-step protocolとpaper-comparison rulesについては[`BENCHMARKS.md`](./BENCHMARKS.md)を参照してください。
 
-このリポジトリにはAirPassengersデータセットと、古典的な月次時系列データセットに対してモデルの挙動を確認するためのベンチマークコマンドが含まれています。
+repositoryにはAirPassengers datasetと、古典的な月次time-series datasetに対してmodel behaviorを確認するbenchmark commandが含まれています。
 
-Docker Composeでベンチマークを実行します:
+Docker Composeでbenchmarkを実行します:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
 ```
 
-JSON出力:
+JSON output:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
   node scripts/benchmark-air-passengers.mjs --json
 ```
 
-季節ナイーブベースライン:
+Seasonal naive baseline:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
@@ -409,16 +414,16 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 ```
 
 
-### 16ステップ・ホールドアウトベンチマーク
+### 16-step holdout benchmark
 
-以下の結果では、比較可能なすべてのモデルに同じ固定起点評価プロトコルを使用しています:
+以下の結果では、比較可能なすべてのmodelについて同じfixed-origin evaluation protocolを使用しています:
 
-- 学習: AirPassengersの最初の128観測値
-- ホールドアウト: 続く16観測値
-- 予測中にホールドアウトの予測対象値をフィードバックしない
-- 共通の点予測指標: MAE、RMSE、MAPE、sMAPE、MASE
+- train: AirPassengersの最初の128 observations
+- holdout: 次の16 observations
+- forecasting中にholdout target valueをフィードバックしない
+- 共通のpoint metrics: MAE、RMSE、MAPE、sMAPE、MASE
 
-次のコマンドでベンチマークを再現できます:
+benchmarkを再現するには:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm \
@@ -429,31 +434,76 @@ docker compose -f docker-compose.test.yml run --rm \
   '
 ```
 
-測定結果:
+LightGBMのみのAirPassengers evaluation:
 
-| モデル | 学習 | ホライズン | MAE | RMSE | MAPE | sMAPE | MASE |
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_air_passengers_benchmark
+```
+
+これは同じ128/16 fixed-origin protocolを`--algorithm lightgbm`で実行するため、結果を他のAirPassengers rowと直接比較できます。
+
+以前に測定した結果（このtableはLightGBM統合前のものです。現在のLightGBM rowを生成するには上記のLightGBM-only commandを実行してください）:
+
+| Model | Train | Horizon | MAE | RMSE | MAPE | sMAPE | MASE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | seasonal-naive | 128 | 16 | 64.2500 | 68.0808 | 14.1651% | 15.4031% | 2.1748 |
 | xgboost | 128 | 16 | 24.5775 | 29.5014 | 5.5687% | 5.3717% | 0.8319 |
+| LightGBM WASM | 128 | 16 | 21.0028 | 26.9474 | 4.4133% | 4.4352% | 0.7109 |
 | Chronos-2-small INT8 ONNX | 128 | 16 | **14.7839** | **17.3376** | **3.2438%** | **3.2636%** | **0.5004** |
 | VARMA experimental | 128 | 16 | N/A | N/A | N/A | N/A | N/A |
 
-この16ステップAirPassengersホールドアウトでは、Chronos-2-small INT8 ONNXが報告されたすべての点予測指標で最小誤差を示しました。これはアプリケーションレベルの比較であり、Chronos-2論文の集約スコアを直接再現したものではありません。
+この16-step AirPassengers holdoutでは、Chronos-2-small INT8 ONNXが報告されたすべてのpoint metricで最小errorとなりました。これはapplication-level comparisonであり、Chronos-2 paperのaggregate scoresを直接再現したものではありません。
 
-AirPassengersは単変量である一方、このリポジトリの実験的VARMA実装は少なくとも2つの数値系列を必要とするため、VARMAはN/Aとしています。多変量および論文比較プロトコルについては [`BENCHMARKS.md`](./BENCHMARKS.md) を参照してください。
+同じprotocolでは、LightGBM WASMが報告されたすべてのpoint metricでXGBoostを上回りました。
+
+AirPassengersはunivariateであり、このrepositoryのexperimental VARMA implementationには少なくとも2つのnumeric seriesが必要なため、VARMAはN/Aです。multivariateおよびpaper-comparison protocolについては[`BENCHMARKS.md`](./BENCHMARKS.md)を参照してください。
 
 
-### AirPassengers xgboost ベンチマーク (120/24)
+## Multivariate LightGBM Benchmark
 
-#### csv: data/air_passengers.csv
-|  | この実装 | seasonal-naive | 
-| -------- | -------- | -------- |
-| train_size | 120 | 120 | 
-| test_size | 24 | 24 | 
-| MAE | 43.6495 | 47.5833 | 
-| RMSE | 50.8508 | 49.9867 | 
-| MAPE | 9.5665% | 10.5227% | 
-| sMAPE | 9.5943% | 11.1666% | 
+repositoryには、numeric series `ITEM_A`、`ITEM_B`、`ITEM_C`を含む`data/sample_data.csv`を使用したfixed-origin multivariate LightGBM evaluationも含まれています。
+
+デフォルトでは:
+
+- 最後の16 rowsをholdoutとする;
+- それ以前のrowsをtraining/context windowとする;
+- 各numeric columnを1回ずつtargetとして評価する;
+- その他のnumeric columnsは、browser appと同じengineered feature pipelineで利用できる;
+- holdoutのnumeric valueをrecursive forecasting中にフィードバックしない;
+- target以外のseriesはapplicationのseasonal-continuation policyで進める;
+- LightGBMをseasonal-naive baselineと比較する;
+- MAE、RMSE、MAPE、sMAPE、MASEをtargetごと、およびmacro meanとして報告する。
+
+Docker Composeで実行します:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark
+```
+
+JSON output:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs --json
+  '
+```
+
+1つのtargetだけを評価するには:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  lightgbm_multivariate_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-multivariate-lightgbm.mjs \
+      --target ITEM_A --algorithm lightgbm --markdown
+  '
+```
 
 ---
 

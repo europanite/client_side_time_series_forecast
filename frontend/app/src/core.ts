@@ -85,8 +85,13 @@ export function predictNext(
     targetKey
   );
   const pred = model.predict([lastFeatureRow]);
-  const yhat = Array.isArray(pred) ? Number(pred[0]) : Number(pred);
-  return yhat;
+  const first =
+    pred != null &&
+    typeof pred !== "number" &&
+    typeof pred.length === "number"
+      ? pred[0]
+      : pred;
+  return Number(first);
 }
 
 export type ForecastPoint = {
@@ -160,8 +165,8 @@ function seasonalizePrediction(
   const seasonalValue = seasonalContinuation(rows, key, period);
   if (!Number.isFinite(seasonalValue)) return rawPrediction;
 
-  // XGBoost gives the local level, while the recent seasonal continuation
-  // preserves the up/down movement visible in daily or monthly data.
+  // The fitted tree model gives the local level, while the recent seasonal
+  // continuation preserves the up/down movement visible in daily or monthly data.
   return rawPrediction * 0.35 + seasonalValue * 0.65;
 }
 
