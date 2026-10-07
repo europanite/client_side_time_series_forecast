@@ -23,12 +23,13 @@
   <a href="./README.fr.md">🇫🇷 Français</a>
 </p>
 
+> **Aviso de traducción:** Este README es una traducción de la versión en inglés. En caso de discrepancia, el `README.md` en inglés es la fuente de referencia.
 
 !["web_ui"](./assets/images/web_ui.png)
 
 [PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
 
-Un playground de pronóstico de series temporales multivariadas, basado en el navegador y ejecutado del lado del cliente, impulsado por XGBoost y una línea base experimental de estilo VARMA.
+Un entorno de pruebas de pronóstico de series temporales basado en navegador y ejecutado del lado del cliente, impulsado por XGBoost, un modelo experimental de estilo VARMA y Chronos-2.
 
 La aplicación carga un archivo CSV o XLSX, detecta columnas de fecha/hora y columnas numéricas, permite elegir un modelo de pronóstico y visualiza tanto los valores observados como un pronóstico de 16 pasos. Tus datos permanecen en tu navegador.
 
@@ -36,37 +37,37 @@ La aplicación carga un archivo CSV o XLSX, detecta columnas de fecha/hora y col
 
 ## Descripción general
 
-Esta es una herramienta de pronóstico de series temporales multivariadas que se ejecuta completamente en tu navegador web.
-No requiere instalación, registro ni pago.
-Solo accede con tu navegador y puedes comenzar.
-Ayuda a pequeñas empresas a predecir los pedidos de mañana.
+Esta es una herramienta de pronóstico de series temporales multivariantes que se ejecuta por completo en tu navegador web.
+No requiere instalación, registro ni pago. 
+Solo tienes que acceder desde el navegador y estará lista para usar.
+Ayuda a pequeñas empresas a predecir los pedidos del día siguiente.
 
-- Cargar datasets de series temporales CSV/XLSX en el navegador
+- Cargar conjuntos de datos de series temporales CSV/XLSX en el navegador
 - Seleccionar cualquier columna numérica como objetivo del pronóstico
-- Elegir entre el modelo XGBoost predeterminado y una línea base experimental de estilo VARMA
-- Entrenar localmente el modelo seleccionado en el navegador
-- Pronosticar los siguientes 16 puntos y agregarlos al gráfico
+- Elegir entre XGBoost, un modelo experimental de estilo VARMA y Chronos-2 preentrenado
+- Entrenar localmente en el navegador el modelo seleccionado
+- Pronosticar los próximos 16 puntos y añadirlos al gráfico
 
-Todo ocurre **dentro de tu navegador**. No hay API de backend y ningún dato sale de tu máquina.
+Todo ocurre **dentro de tu navegador**. No existe una API de backend y ningún dato sale de tu equipo.
 
 ---
 
 ## Demo
 
-1. Open the GitHub Pages demo:  
+1. Abre la demo de GitHub Pages:  
    https://europanite.github.io/client_side_time_series_forecast/
-2. Upload a sample file such as [`data/sample_data.csv`](./data/datsample_dataa.csv) or [`data/sample_data.xlsx`](./data/sample_data.xlsx).
-3. The app will:
-   - Detect a **datetime-like column**
-   - List available numeric columns
-4. Choose one numeric column as the **target**.
-5. Choose a **forecast model**. `XGBoost` is the default. `VARMA experimental` is a lightweight multivariate baseline for comparison.
-6. Click **Train** to build the selected model, then click **Forecast +16** to predict the next 16 points.
-7. Inspect the chart to compare the observed series and the forecast line.
+2. Carga un archivo de ejemplo como [`data/sample_data.csv`](./data/datsample_dataa.csv) o [`data/sample_data.xlsx`](./data/sample_data.xlsx).
+3. La aplicación:
+   - Detectará una **columna con aspecto de fecha/hora**
+   - Mostrará las columnas numéricas disponibles
+4. Elige una columna numérica como **objetivo**.
+5. Elige un **modelo de pronóstico**. `XGBoost` es el predeterminado, `VARMA experimental` es una línea base multivariante ligera y `Chronos-2 pretrained` es un modelo fundacional zero-shot.
+6. Para XGBoost o VARMA, primero haz clic en **Train**. Chronos-2 ya está preentrenado y no requiere entrenamiento local. Después, haz clic en **Forecast +16** para predecir los próximos 16 puntos.
+7. Examina el gráfico para comparar la serie observada con la línea de pronóstico.
 
 ---
 
-## Estructura de datos
+## Estructura de los datos
 
 <pre>
 datetime,item_a,item_b,item_c,...
@@ -78,161 +79,253 @@ datetime,item_a,item_b,item_c,...
 
 ### Requisitos:
 
-##### Una columna similar a fecha/hora
-El encabezado contiene "date" o "time" sin distinguir mayúsculas. Se usa como eje temporal, pero no se convierte directamente en características numéricas.
+##### Una columna con aspecto de fecha/hora
+El encabezado de la columna contiene "date" o "time" (sin distinguir mayúsculas de minúsculas).
+Se utiliza como eje temporal, pero no se convierte directamente en características numéricas.
 
 ##### Una o más columnas numéricas
-Estas columnas se usan como objetivo y/o características exógenas. La aplicación admite dos modos de pronóstico:
+Estas columnas se utilizan como objetivo y/o como características exógenas.
+La aplicación admite dos modos de pronóstico:
 
-- **XGBoost**: eliges una columna numérica como objetivo y las demás columnas numéricas se usan como señales adicionales.
-- **VARMA experimental**: todas las columnas numéricas se modelan juntas y la columna objetivo seleccionada se muestra como salida del pronóstico.
+- **XGBoost**: eliges una columna numérica como objetivo y las demás columnas numéricas se utilizan como señales adicionales.
+- **VARMA experimental**: todas las columnas numéricas se modelan conjuntamente y la columna objetivo seleccionada se muestra como salida del pronóstico.
 
 ---
 
 ## Enfoque de pronóstico
 
-El proyecto ofrece dos enfoques de pronóstico en el navegador: el modelo XGBoost predeterminado y una línea base experimental de estilo VARMA.
+El proyecto ofrece tres algoritmos de pronóstico con supuestos deliberadamente diferentes:
 
-Para cada fila, la aplicación construye un vector de características a partir de:
+| Modelo | Estilo de aprendizaje | ¿Usa varias series de entrada? | ¿Entrenamiento local? | Estilo de pronóstico |
+| --- | --- | --- | --- | --- |
+| XGBoost | Regresión con árboles de decisión potenciados por gradiente sobre características de series temporales diseñadas | Sí | Sí | Pronóstico recursivo de un paso |
+| VARMA experimental | Autorregresión lineal multi-salida con regularización ridge, corrección de residuos y estabilización estacional | Sí, conjuntamente | Sí | Pronóstico recursivo multi-salida |
+| Chronos-2-small INT8 ONNX | Modelo fundacional de series temporales preentrenado y basado en patches | Solo el objetivo seleccionado en la UI actual | No | Pronóstico probabilístico directo de varios pasos |
 
-- valores de rezago recientes
-- diferencias locales
-- medias móviles
-- interacciones entre series
-- índice temporal
-- características cíclicas de estilo Fourier
+Estos modelos no deben interpretarse como tres implementaciones del mismo algoritmo. XGBoost convierte la serie temporal en un problema de aprendizaje supervisado tabular, VARMA modela conjuntamente vectores rezagados de varias series y Chronos-2 utiliza un modelo neuronal de pronóstico preentrenado sin ajustar nuevos parámetros al conjunto de datos cargado.
 
-La columna objetivo seleccionada se usa como etiqueta de predicción. El modelo aprende cómo el siguiente valor se relaciona con el comportamiento reciente del objetivo y de otras series numéricas.
-
-### Selección de modelo
+### Selección del modelo
 
 #### XGBoost
 
-`XGBoost` es el modelo predeterminado. Es un modelo de regresión basado en características que usa valores rezagados, estadísticas móviles, interacciones entre series y características temporales. Úsalo cuando quieras el pronóstico general más sólido a partir de datos tabulares multivariados de series temporales.
+`XGBoost` es el modelo predeterminado entrenado localmente. XGBoost es un algoritmo de árboles de decisión potenciados por gradiente: se añaden muchos árboles de decisión de forma secuencial y cada árbol nuevo reduce los errores que deja el conjunto anterior. Las series temporales no se pasan directamente a XGBoost. Este proyecto primero convierte cada paso temporal en un vector de características y después entrena XGBoost como modelo de regresión.
+
+La implementación en navegador utiliza:
+
+- rezagos del objetivo y de las variables exógenas hasta `MAX_LAG = 3`
+- primeras diferencias
+- una media móvil con `ROLLING_WINDOW = 7`
+- interacciones de diferencia, razón y producto entre series numéricas
+- un índice temporal
+- características de Fourier con periodos 24 y 168
+- `gbtree` con profundidad 4, tasa de aprendizaje 0.1, subsample 0.8 y 200 iteraciones de boosting
+
+Para un pronóstico de 16 pasos, el modelo predice un paso cada vez. Cada predicción se añade al historial de trabajo y, por tanto, queda disponible para el siguiente paso. La predicción bruta de XGBoost también se combina con una estimación de continuación estacional. El contexto numérico no objetivo avanza en lugar de mantenerse constante.
+
+**Fortalezas**
+
+- captura relaciones no lineales e interacciones entre series
+- funciona de forma natural con las características multivariantes diseñadas manualmente en el proyecto
+- se entrena localmente y con relativa rapidez en el navegador
+- no requiere descargar un gran modelo preentrenado
+
+**Limitaciones**
+
+- la calidad del pronóstico depende de la ingeniería de características elegida
+- el pronóstico recursivo puede acumular errores en pasos posteriores
+- los periodos de Fourier fijos y la continuación estacional son supuestos a nivel de aplicación, no una estructura de calendario aprendida automáticamente
+
+Usa XGBoost cuando quieras un modelo no lineal ligero, entrenado localmente, que pueda aprovechar las relaciones entre varias columnas numéricas.
 
 #### VARMA experimental
 
-`VARMA experimental` es una línea base multivariada ligera de estilo VARMA implementada en TypeScript. Pronostica series numéricas en conjunto y muestra la serie objetivo seleccionada.
+`VARMA experimental` es una línea base multivariante ligera y nativa del navegador. A pesar del nombre, esta implementación **no es un estimador VARMA estadístico completo por máxima verosimilitud**. Se parece más a un modelo de estilo VAR regularizado con una pequeña corrección de residuos y estabilización estacional explícita.
 
-Esta implementación es intencionalmente experimental. No es una implementación VARMA completa de máxima verosimilitud. Actualmente se comporta como un modelo autorregresivo de estilo VAR con estabilización residual y estacional, por lo que debe usarse como línea base de comparación y no como reemplazo de XGBoost.
+La implementación:
 
-Usa `VARMA experimental` cuando quieras comparar XGBoost con un modelo clásico multivariado de series temporales, especialmente cuando varias series numéricas se mueven juntas.
+1. selecciona hasta 8 series numéricas y las estandariza;
+2. concatena los 7 vectores multivariantes anteriores para formar un vector de características rezagadas;
+3. ajusta simultáneamente todas las series de salida mediante regresión ridge multi-salida
+   (`ridge = 1e-2`);
+4. estima una pequeña corrección a partir de residuos recientes (`maLag = 1`);
+5. durante el pronóstico, combina la salida autorregresiva con el vector del rezago estacional
+   (`seasonalLag = 7`, `seasonalBlend = 0.55`);
+6. realimenta recursivamente el vector predicho en el siguiente paso de pronóstico.
+
+Como en cada paso se predice el vector numérico completo, VARMA hace avanzar conjuntamente todas las series modeladas en lugar de pronosticar solo el objetivo seleccionado.
+
+**Fortalezas**
+
+- simple y poco costoso computacionalmente
+- modela conjuntamente varias series numéricas
+- proporciona una línea base lineal/de estilo clásico útil frente a XGBoost y Chronos-2
+- se ejecuta por completo en TypeScript sin descargar un modelo independiente
+
+**Limitaciones**
+
+- requiere al menos dos series numéricas y más de 7 filas utilizables
+- asume relaciones de rezago principalmente lineales
+- la corrección de residuos y la mezcla estacional son estabilizadores pragmáticos, no un procedimiento completo de estimación de media móvil
+- no debe presentarse como una implementación de referencia de VARMA estadístico
+
+Usa `VARMA experimental` principalmente como una línea base multivariante transparente cuando varias series se mueven conjuntamente.
+
+#### Chronos-2 pretrained
+
+`Chronos-2 pretrained` es fundamentalmente diferente de los dos modelos ajustados localmente anteriores. Chronos-2 es un modelo fundacional de series temporales preentrenado y basado en patches que produce directamente **pronósticos por cuantiles** de varios pasos. Este repositorio ejecuta `Chronos-2-small INT8` como modelo ONNX con ONNX Runtime Web, por lo que la inferencia se realiza localmente una vez descargado el modelo.
+
+La integración actual en el navegador:
+
+- **no** entrena con el conjunto de datos cargado;
+- utiliza únicamente la serie objetivo seleccionada como contexto de Chronos;
+- requiere al menos 16 observaciones numéricas del objetivo;
+- conserva como máximo 5,760 observaciones de contexto;
+- agrupa la entrada en patches de 16 puntos y rellena por la izquierda con `NaN` el primer patch incompleto;
+- ejecuta la salida interna de 672 pasos del grafo ONNX
+  (`42 × 16`) y expone los primeros 16 pasos en la UI;
+- lee la salida de cuantiles del modelo y muestra el pronóstico mediano (`p50`) junto con los límites de incertidumbre `p10` y `p90`.
+
+Chronos-2 en sí admite pronósticos multivariantes más ricos y con información de covariables, pero **la UI actual todavía no utiliza esas capacidades**. Por tanto, la implementación actual de Chronos debe entenderse como un predictor preentrenado univariante del objetivo dentro de una aplicación que, por lo demás, es multivariante.
+
+**Fortalezas**
+
+- pronóstico zero-shot: no es necesario ajustar un modelo para cada conjunto de datos
+- predice directamente todo el horizonte de pronóstico en lugar de ajustar recursivamente modelos de un paso
+- proporciona información probabilística mediante cuantiles de pronóstico
+- puede transferir a una nueva serie patrones aprendidos durante un preentrenamiento a gran escala
+
+**Limitaciones**
+
+- el modelo debe descargarse antes del primer uso
+- el navegador utiliza una exportación INT8 ONNX, por lo que los resultados no tienen por qué coincidir exactamente con un checkpoint oficial de precisión completa
+- la UI actual ignora las columnas numéricas adicionales al llamar a Chronos-2
+- la memoria del navegador y la ejecución WASM imponen límites prácticos al tamaño del modelo y a la longitud del contexto
+
+En el benchmark holdout AirPassengers 128/16 actual del repositorio, `Chronos-2-small INT8 ONNX` obtuvo el menor MAE, RMSE, MAPE, sMAPE y MASE entre los modelos comparables. Consulta la sección de benchmark más abajo para ver los valores medidos y el protocolo de evaluación.
 
 ### Pronóstico de 16 pasos
 
-La UI pronostica 16 puntos futuros. Cada paso futuro se agrega al historial de trabajo para que los pasos posteriores puedan usar valores predichos anteriormente.
+El horizonte predeterminado a nivel de aplicación es 16 porque el modelo ONNX Chronos-2 integrado utiliza patches de 16 puntos, y las API de XGBoost y VARMA están alineadas con el mismo horizonte para facilitar la comparación.
 
-Para datos multiserie, la aplicación también avanza el contexto numérico para que el pronóstico no mantenga simplemente cada columna no objetivo fija en el último valor observado. En modo XGBoost, el objetivo seleccionado se pronostica directamente mientras se extiende el contexto no objetivo. En modo VARMA experimental, todas las series numéricas avanzan juntas y la serie objetivo seleccionada se muestra en el gráfico y el texto del pronóstico.
+Los algoritmos alcanzan esos 16 puntos de formas distintas:
+
+- **XGBoost** predice de forma recursiva. Cada valor objetivo predicho pasa a formar parte del historial para el siguiente paso, mientras que el contexto no objetivo también avanza.
+- **VARMA experimental** predice recursivamente un vector multivariante completo y realimenta ese vector predicho en el siguiente paso.
+- **Chronos-2** realiza inferencia probabilística directa de varios pasos y devuelve las primeras 16 posiciones futuras de la salida del modelo preentrenado.
+
+Esta diferencia importa al comparar los modelos: XGBoost y VARMA pueden acumular error de pronóstico recursivo, mientras que Chronos-2 genera directamente la secuencia futura solicitada.
 
 ---
 
-## Ingeniería de características
+## Ingeniería de características (XGBoost)
 
-Este proyecto trata la entrada como una pequeña serie temporal multivariada:
+Las características diseñadas manualmente en esta sección se aplican al pipeline de XGBoost. VARMA utiliza directamente vectores de rezagos normalizados, mientras que Chronos-2 opera sobre la secuencia objetivo seleccionada sin estas características.
 
-- Una columna *datetime-like* (el encabezado contiene `date` o `time` en cualquier combinación).
+El pipeline de XGBoost trata la entrada como una pequeña serie temporal multivariante:
+
+- Una columna *con aspecto de fecha/hora* (el encabezado contiene `date` o `time` sin distinguir mayúsculas de minúsculas).
 - Varias columnas numéricas (por ejemplo, `item_a`, `item_b`, `item_c`, ...).
-- Una de las columnas numéricas se elige como **target** para pronosticar.
+- Una de las columnas numéricas se elige como **objetivo** a pronosticar.
 
-Internamente, el constructor de características crea un **rich feature vector** para cada paso temporal `t` y un **future feature vector** para `t + 1`. Todas las características se calculan **puramente en el cliente**, en JavaScript/TypeScript.
+Internamente, el constructor de características crea un **vector de características rico** para cada paso temporal `t` y un **vector de características futuro** para `t + 1`. Todas las características se calculan **íntegramente en el cliente**, en JavaScript/TypeScript.
 
-### Series usadas para las características
+### Series utilizadas para las características
 
 - `datetimeKey`  
   - Se detecta automáticamente a partir del encabezado que contiene `"date"` o `"time"`.
-  - Solo se usa para ubicar el eje temporal; no se usa directamente como característica numérica.
+  - Solo se utiliza para localizar el eje temporal; no se usa directamente como característica numérica.
 - `targetKey`  
   - Columna numérica que el usuario elige pronosticar.
 - `featureKeys`  
-  - Todas las demás columnas numéricas (no datetime, no target).
+  - Todas las demás columnas numéricas (no datetime y no objetivo).
   - Se tratan como **series exógenas**.
 
-Internamente mantenemos un `seriesMap: Record<string, number[]>` con un arreglo numérico por serie.
+Internamente mantenemos un `seriesMap: Record<string, number[]>` con un array numérico por serie.
 
 ### Características por serie (series exógenas)
 
-Para cada serie exógena `x(t)` (cada clave en `featureKeys`) y cada paso temporal `t`, calculamos:
+Para cada serie exógena `x(t)` (cada key de `featureKeys`) y cada paso temporal `t`, calculamos:
 
-1. **Contemporaneous value**
-   - `x(t)`
+1. **Valor contemporáneo**
+   - `x(t)` (el valor en el índice temporal `t`).
 
-2. **Lag features (history)**
-   - Up to `MAX_LAG = 3`:
+2. **Características de rezago (historial)**
+   - Hasta `MAX_LAG = 3`:
      - `x(t - 1)`
      - `x(t - 2)`
      - `x(t - 3)`
-   - This allows the model to learn short-term temporal dynamics per series.
+   - Esto permite al modelo aprender la dinámica temporal de corto plazo de cada serie.
 
-3. **First difference**
+3. **Primera diferencia**
    - `x(t) - x(t - 1)`
-   - Captures local changes (trend / slope) rather than absolute level only.
+   - Captura cambios locales (tendencia / pendiente) en lugar de solo el nivel absoluto.
 
-4. **Rolling mean (local average)**
-   - Rolling window of `ROLLING_WINDOW = 7` time steps:
-     - `mean(x[t - 6 ... t])`
-   - Represents local trend / baseline level and smooths short-term noise.
+4. **Media móvil (promedio local)**
+   - Ventana móvil de `ROLLING_WINDOW = 7` pasos temporales:
+     - `mean(x[t - 6 ... t])` (truncada cerca del comienzo de la serie)
+   - Representa la tendencia local / nivel base y suaviza el ruido de corto plazo.
 
-> If the series is shorter than the window, the code automatically shrinks the window so that all available past points up to `t` are used.
+> Si la serie es más corta que la ventana, el código reduce automáticamente la ventana para usar todos los puntos pasados disponibles hasta `t`.
 
 ### Historial de la serie objetivo
 
-Para la **target series** `y(t)`, no incluimos el valor actual `y(t)` como característica porque es la etiqueta de ese paso, pero sí incluimos su historial:
+Para la propia **serie objetivo** `y(t)`, **no** incluimos el valor actual `y(t)` como característica (porque es la etiqueta de ese paso), pero sí incluimos su historial:
 
-1. **Target lags**
+1. **Rezagos del objetivo**
    - `y(t - 1)`
    - `y(t - 2)`
    - `y(t - 3)`
 
-2. **Target difference**
+2. **Diferencia del objetivo**
    - `y(t) - y(t - 1)`
 
-3. **Target rolling mean**
-   - Same rolling window as above:
+3. **Media móvil del objetivo**
+   - La misma ventana móvil indicada arriba:
      - `mean(y[t - 6 ... t])`
 
-This lets the model learn patterns like “the next value depends on the last few values and their local trend,” which is typical in time-series forecasting.
+Esto permite al modelo aprender patrones como «el siguiente valor depende de los últimos valores y de su tendencia local», algo habitual en el pronóstico de series temporales.
 
 ### Interacciones entre series
 
-Para capturar **relaciones entre diferentes series**, creamos características de interacción para cada **par de series numéricas** (incluido el objetivo):
+Para capturar **relaciones entre distintas series**, construimos características de interacción para cada **par de series numéricas** (incluido el objetivo):
 
-- Let `v_i(t)` and `v_j(t)` be the contemporaneous values of two series at time `t`.
-- For each ordered pair `(i, j)` with `i < j`, we compute:
+- Sean `v_i(t)` y `v_j(t)` los valores contemporáneos de dos series en el tiempo `t`.
+- Para cada par ordenado `(i, j)` con `i < j`, calculamos:
 
-1. **Spread**
+1. **Diferencia**
    - `v_i(t) - v_j(t)`
-   - Encodes relative level differences between series.
+   - Codifica diferencias relativas de nivel entre series.
 
-2. **Ratio**
+2. **Razón**
    - `v_i(t) / v_j(t)`
-   - To avoid division by zero, the denominator includes a small epsilon if needed:
+   - Para evitar una división por cero, el denominador incluye un pequeño epsilon si es necesario:
      - `denom = |v_j| < 1e-9 ? sign(v_j) * 1e-9 : v_j`
-   - Encodes relative scale and proportionality.
+   - Codifica la escala relativa y la proporcionalidad.
 
-3. **Product**
+3. **Producto**
    - `v_i(t) * v_j(t)`
-   - Allows the model to express “interaction effects” where both series being large or small matters.
+   - Permite al modelo expresar «efectos de interacción» en los que importa que ambas series sean grandes o pequeñas.
 
-These cross-series features explicitly expose **multi-series structure** to the booster instead of relying only on individual series values.
+Estas características entre series exponen explícitamente la **estructura multiserie** al booster en lugar de depender solo de los valores individuales de cada serie.
 
-### Índice temporal y características Fourier
+### Índice temporal y características de Fourier
 
-También codificamos el tiempo mismo como características numéricas:
+También codificamos el propio tiempo como características numéricas:
 
-1. **Time index**
-   - Integer index `t = 0, 1, 2, ...` (row index).
-   - Gives the booster a simple way to model global trends.
+1. **Índice temporal**
+   - Índice entero `t = 0, 1, 2, ...` (índice de fila).
+   - Proporciona al booster una forma sencilla de modelar tendencias globales.
 
-2. **Fourier features** (cyclical patterns)
-   - Two fixed periods (in units of “number of rows”):
-     - Period 24 (e.g., 24 hours in hourly data)
-     - Period 168 (e.g., 7 days × 24 hours)
-   - For each period `P` we compute:
+2. **Características de Fourier** (patrones cíclicos)
+   - Dos periodos fijos (en unidades de «número de filas»):
+     - Periodo 24 (por ejemplo, 24 horas en datos horarios)
+     - Periodo 168 (por ejemplo, 7 días × 24 horas)
+   - Para cada periodo `P` calculamos:
      - `sin(2πt / P)`
      - `cos(2πt / P)`
-   - This is a standard way to embed seasonality/cycles in a form that tree models can still exploit.
+   - Es una forma estándar de incorporar estacionalidad/ciclos en un formato que los modelos de árboles todavía pueden aprovechar.
 
-The final feature vector for each time step `t` is:
+El vector final de características para cada paso temporal `t` es:
 
 ```text
 [ exogenous features (current, lags, diff, rolling mean for each series),
@@ -242,14 +335,14 @@ The final feature vector for each time step `t` is:
 ```
 
 ### Vector de características del paso futuro (lastFeatureRow)
-La misma lógica de construcción de características se usa para producir un vector para t + 1 (predicción a un paso):
-- Conceptually, we treat the next time index as t_next = n where n is the number of observed rows.
-- For the “current” values of each series at t_next, we reuse the last observed value (index n - 1).
-- Lags and rolling means are computed using the last MAX_LAG / ROLLING_WINDOW steps in the observed data.
-- Time encodings use t_next as the time index.
-- This gives a single feature vector lastFeatureRow that represents the next time step based on all history up to the last observation.
+La misma lógica de construcción de características se utiliza para producir un vector de características para t + 1 (predicción a un paso):
+- Conceptualmente, tratamos el siguiente índice temporal como t_next = n, donde n es el número de filas observadas.
+- Para los valores «actuales» de cada serie en t_next, reutilizamos el último valor observado (index n - 1).
+- Los rezagos y las medias móviles se calculan usando los últimos MAX_LAG / ROLLING_WINDOW pasos de los datos observados.
+- Las codificaciones temporales utilizan t_next como índice temporal.
+- Esto produce un único vector de características lastFeatureRow que representa el siguiente paso temporal basándose en todo el historial hasta la última observación.
 
-The buildFeatures function therefore returns:
+Por tanto, la función buildFeatures devuelve:
 ```text
 {
   X: number[][];        // feature matrix for all observed steps
@@ -266,7 +359,7 @@ The buildFeatures function therefore returns:
 ### 1. Requisitos previos
 - [Docker Compose](https://docs.docker.com/compose/)
 
-### 2. Construir e iniciar todos los servicios:
+### 2. Compilar e iniciar todos los servicios:
 
 ```bash
 
@@ -278,7 +371,7 @@ docker compose up
 
 ```
 
-### 3. Test:
+### 3. Pruebas:
 ```bash
 docker compose \
 -f docker-compose.test.yml up \
@@ -288,9 +381,11 @@ frontend_test
 
 ---
 
-## Benchmark AirPassengers
+## Benchmark de AirPassengers
 
-El repositorio incluye un dataset AirPassengers y un comando de benchmark para comprobar el comportamiento del modelo frente a un dataset mensual clásico de series temporales.
+Consulta [`BENCHMARKS.md`](./BENCHMARKS.md) para ver el protocolo justo de 16 pasos y las reglas de comparación con artículos.
+
+El repositorio incluye un conjunto de datos AirPassengers y un comando de benchmark para comprobar el comportamiento de los modelos frente a un conjunto de datos clásico de series temporales mensuales.
 
 Ejecuta el benchmark con Docker Compose:
 
@@ -298,24 +393,59 @@ Ejecuta el benchmark con Docker Compose:
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark
 ```
 
-JSON output:
+Salida JSON:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
   node scripts/benchmark-air-passengers.mjs --json
 ```
 
-Seasonal naive baseline:
+Línea base seasonal naive:
 
 ```bash
 docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
   node scripts/benchmark-air-passengers.mjs --algorithm seasonal-naive --json
 ```
 
-### AirPassengers xgboost benchmark
+
+### Benchmark holdout de 16 pasos
+
+Los siguientes resultados utilizan el mismo protocolo de evaluación con origen fijo para todos los modelos comparables:
+
+- entrenamiento: primeras 128 observaciones de AirPassengers
+- holdout: siguientes 16 observaciones
+- ningún valor objetivo del holdout se realimenta durante el pronóstico
+- métricas puntuales comunes: MAE, RMSE, MAPE, sMAPE y MASE
+
+Reproduce el benchmark con:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm \
+  air_passengers_benchmark \
+  sh -lc '
+    npm --prefix frontend/app ci &&
+    node scripts/benchmark-air-passengers-fair.mjs --markdown
+  '
+```
+
+Resultados medidos:
+
+| Modelo | Entrenamiento | Horizonte | MAE | RMSE | MAPE | sMAPE | MASE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| seasonal-naive | 128 | 16 | 64.2500 | 68.0808 | 14.1651% | 15.4031% | 2.1748 |
+| xgboost | 128 | 16 | 24.5775 | 29.5014 | 5.5687% | 5.3717% | 0.8319 |
+| Chronos-2-small INT8 ONNX | 128 | 16 | **14.7839** | **17.3376** | **3.2438%** | **3.2636%** | **0.5004** |
+| VARMA experimental | 128 | 16 | N/A | N/A | N/A | N/A | N/A |
+
+En este holdout de AirPassengers de 16 pasos, Chronos-2-small INT8 ONNX produjo el menor error en todas las métricas puntuales informadas. Esta es una comparación a nivel de aplicación, no una reproducción directa de las puntuaciones agregadas del artículo de Chronos-2.
+
+VARMA aparece como N/A porque AirPassengers es univariante, mientras que la implementación experimental de VARMA de este repositorio requiere al menos dos series numéricas. Consulta [`BENCHMARKS.md`](./BENCHMARKS.md) para ver el protocolo multivariante y de comparación con artículos.
+
+
+### Benchmark xgboost de AirPassengers (120/24)
 
 #### csv: data/air_passengers.csv
-|  | This Work | seasonal-naive | 
+|  | Este trabajo | seasonal-naive | 
 | -------- | -------- | -------- |
 | train_size | 120 | 120 | 
 | test_size | 24 | 24 | 
@@ -326,5 +456,5 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 
 ---
 
-# License
+# Licencia
 - Apache License 2.0
