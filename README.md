@@ -30,22 +30,22 @@
 
 A Client-Side Browser-Based Time-Series Forecast Playground powered by [XGBoost](https://xgboost.readthedocs.io/en/stable/), [LightGBM](https://lightgbm.readthedocs.io/), an experimental VARMA-style model, and [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
-## Fixed multivariate stock benchmark
+## multivariate stock benchmark
 
 **Default protocol for the next evaluation:** 256 trading sessions of rolling training,
 256 sessions of long-window evaluation, and the final 32 sessions as the recent
 subset. The measured tables below show their **actual run parameters** until
 the next complete evaluation refreshes them; changing the configuration does
-not retroactively change historical scores. The fixed groups and once-daily
+not retroactively change historical scores. The groups and once-daily
 GitHub Actions schedule are unchanged.
 
 <!-- STOCK_MULTIVARIATE:START -->
-**Daily fixed-group, symmetric forecast benchmark.** Last evaluation: 2026-10-08T00:59:34.821Z UTC; last observed market session: 2026-10-07.
-Pre-registered **5 fixed groups** ([definitions](./config/stock-evaluation-groups.json), config SHA-256 dd6f956e125a); no stock/group selection by test results.
+**Daily Group, symmetric forecast benchmark.** Last evaluation: 2026-10-08T00:59:34.821Z UTC; last observed market session: 2026-10-07.
+Pre-registered **5 Groups** ([definitions](./config/stock-evaluation-groups.json), config SHA-256 dd6f956e125a); no stock/group selection by test results.
 Walk-forward forecast origins: **long 256 sessions** (2025-09-17–2026-10-07) and **recent 32 sessions** (2026-08-20–2026-10-07), with a 256 session rolling training window. Recent is INCLUDED in long, not independent.
 
 ### Long window — solo versus multivariate (same algorithm)
-| Fixed group | Algorithm | Solo MAPE ↓ | Multi MAPE ↓ | Multi gain ↑ | Solo P/L | Multi P/L |
+| Group | Algorithm | Solo MAPE ↓ | Multi MAPE ↓ | Multi gain ↑ | Solo P/L | Multi P/L |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Automakers | ridge | 1.48% | 1.52% | -2.88% | ¥-93534 | ¥-238853 |
 | Automakers | xgboost | 1.66% | 1.63% | 1.66% | ¥-280027 | ¥-302122 |
@@ -64,7 +64,7 @@ Walk-forward forecast origins: **long 256 sessions** (2025-09-17–2026-10-07) a
 | Trading houses | lightgbm | 1.69% | 1.66% | 1.59% | ¥-115719 | ¥-160382 |
 
 ### Recent window — solo versus multivariate (same algorithm)
-| Fixed group | Algorithm | Solo MAPE ↓ | Multi MAPE ↓ | Multi gain ↑ | Solo P/L | Multi P/L |
+| Group | Algorithm | Solo MAPE ↓ | Multi MAPE ↓ | Multi gain ↑ | Solo P/L | Multi P/L |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Automakers | ridge | 1.24% | 1.29% | -4.74% | ¥-38361 | +¥8794 |
 | Automakers | xgboost | 1.50% | 1.42% | 5.71% | +¥23663 | +¥35685 |
@@ -83,7 +83,7 @@ Walk-forward forecast origins: **long 256 sessions** (2025-09-17–2026-10-07) a
 | Trading houses | lightgbm | 1.36% | 1.43% | -5.26% | +¥26621 | ¥-1342 |
 
 ### Recent paper trading and baselines
-| Fixed group | Strategy | Direction hit | Net paper P/L | Return | Trades | Max drawdown |
+| Group | Strategy | Direction hit | Net paper P/L | Return | Trades | Max drawdown |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Automakers | ridge:target_only | 68.75% | ¥-38361 | -3.84% | 14 | 4.87% |
 | Automakers | ridge:multivariate | 59.38% | +¥8794 | 0.88% | 16 | 4.39% |
@@ -134,7 +134,7 @@ Stock-group WASM benchmark compares Ridge/XGBoost/LightGBM, not Chronos-2 or exp
 [Full recent + long JSON](./reports/stocks/multivariate.json) · [History](./reports/stocks/group-history.json) · [Methodology](./STOCK_EVALUATION.md).
 <!-- STOCK_MULTIVARIATE:END -->
 
-The [fixed group definitions](./config/stock-evaluation-groups.json) are intentionally independent of past scores. Every group receives the same models and window, with target-only, last-close and Buy & Hold controls. [Full protocol](./STOCK_EVALUATION.md).
+The [group definitions](./config/stock-evaluation-groups.json) are intentionally independent of past scores. Every group receives the same models and window, with target-only, last-close and Buy & Hold controls. [Full protocol](./STOCK_EVALUATION.md).
 
 ---
 
@@ -272,7 +272,7 @@ constant.
 
 - forecasting quality depends on the chosen feature engineering
 - recursive forecasting can accumulate errors over later steps
-- the fixed Fourier periods and seasonal continuation are application-level
+- the Fourier periods and seasonal continuation are application-level
   assumptions rather than automatically learned calendar structure
 
 Use XGBoost when you want a lightweight, locally trained nonlinear model that
@@ -508,7 +508,7 @@ We also encode time itself as numeric features:
    - Gives the booster a simple way to model global trends.
 
 2. **Fourier features** (cyclical patterns)
-   - Two fixed periods (in units of “number of rows”):
+   - Two periods (in units of “number of rows”):
      - Period 24 (e.g., 24 hours in hourly data)
      - Period 168 (e.g., 7 days × 24 hours)
    - For each period `P` we compute:
@@ -601,9 +601,6 @@ docker compose -f docker-compose.test.yml run --rm air_passengers_benchmark \
 
 ### 16-step holdout benchmark
 
-The following results use the same fixed-origin evaluation protocol for every
-comparable model:
-
 - train: first 128 AirPassengers observations
 - holdout: next 16 observations
 - no holdout target value is fed back during forecasting
@@ -627,7 +624,7 @@ docker compose -f docker-compose.test.yml run --rm \
   lightgbm_air_passengers_benchmark
 ```
 
-This runs the same 128/16 fixed-origin protocol with
+This runs the same 128/16 protocol with
 `--algorithm lightgbm`, so the result is directly comparable with the other
 AirPassengers rows.
 
@@ -659,7 +656,7 @@ paper-comparison protocol.
 
 ## Multivariate LightGBM Benchmark
 
-The repository also includes a fixed-origin multivariate LightGBM evaluation
+The repository also includes a multivariate LightGBM evaluation
 using `data/sample_data_synthetic.csv`, which contains the numeric series `ITEM_A`,
 `ITEM_B`, and `ITEM_C`.
 
