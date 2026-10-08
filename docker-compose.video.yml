@@ -24,7 +24,7 @@ services:
       VIDEO_VOICE: ${VIDEO_VOICE:-en_US-lessac-medium}
       VIDEO_VOICE_DIR: /voices
       VIDEO_AVATAR_ENABLED: ${VIDEO_AVATAR_ENABLED:-1}
-      VIDEO_AVATAR_PATH: /video/avatars-data/Avatar_D_01.vrm
+      VIDEO_AVATAR_PATH: /video/avatars-data/avatar.vrm
       # Avoid root-owned padlock icons in the host's file manager.
       VIDEO_HOST_UID: ${LOCAL_UID:-1000}
       VIDEO_HOST_GID: ${LOCAL_GID:-1000}
