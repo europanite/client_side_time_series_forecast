@@ -13,7 +13,7 @@ import { addNarrationToVideo } from './narration.mjs';
 import { overlayTalkingAvatar } from './avatar-overlay.mjs';
 import { verifyModelChoices } from './model-choices.mjs';
 import { AD_SCRIPT } from './ad-script.mjs';
-import { FRAME_SIZE, VIDEO_SECONDS } from './timeline.mjs';
+import { FRAME_SIZE, VIDEO_SECONDS, OPENING_SILENCE_SECONDS } from './timeline.mjs';
 import { videoPaths, archiveLegacyFiles } from './video-paths.mjs';
 
 const APP_URL = process.env.APP_URL || 'https://europanite.github.io/client_side_time_series_forecast/';
@@ -106,6 +106,7 @@ async function addRecordingOverlay(page) {
       background: 'rgba(0,0,0,.86)', color: '#ffffff', zIndex: '2147483646',
       font: '700 29px/1.2 system-ui, sans-serif', textAlign: 'center',
       pointerEvents: 'none', letterSpacing: '.1px',
+      padding: '6px 24px', boxSizing: 'border-box',
     });
     document.body.appendChild(caption);
 
@@ -153,17 +154,17 @@ async function addRecordingOverlay(page) {
 }
 
 async function caption(page, text) {
-  await page.locator('#__demo_caption').evaluate((node, {value, opening, purpose, models, closing}) => {
+  await page.locator('#__demo_caption').evaluate((node, {value, opening, purpose, models, closing, safety}) => {
     node.textContent = value;
     // Large opening product-name caption, then regular short explanatory captions.
     const title = value === opening;
     const highlight = title || value === purpose || value === closing || value === models;
     node.style.color = highlight ? '#a7f3d0' : '#ffffff';
-    node.style.fontSize = title ? '35px' : (highlight ? '31px' : '29px');
+    node.style.fontSize = value === safety ? '27px' : (title ? '35px' : (highlight ? '31px' : '29px'));
     const panel = document.getElementById('__demo_models');
     if (panel && value !== models) panel.style.display = 'none';
   }, {value: text, opening: AD_SCRIPT[0], purpose: AD_SCRIPT[1],
-    models: AD_SCRIPT[3], closing: AD_SCRIPT[6]});
+    models: AD_SCRIPT[3], safety: AD_SCRIPT[6], closing: AD_SCRIPT[7]});
 }
 
 async function showModelChoices(page, options) {
@@ -262,13 +263,16 @@ async function main() {
       if (ms > 0) await page.waitForTimeout(ms);
     };
 
-    await showCaption(AD_SCRIPT[0]);
+    // Show the real app and QR silently before the narrator starts.
+    await caption(page, '');
     mark('open');
-    await holdUntil(5.5);
+    await holdUntil(OPENING_SILENCE_SECONDS);
+    await showCaption(AD_SCRIPT[0]);
+    await holdUntil(6.5);
 
     await showCaption(AD_SCRIPT[1]);
     mark('purpose');
-    await holdUntil(9.5);
+    await holdUntil(11.0);
 
     await showCaption(AD_SCRIPT[2]);
     const fileInput = page.locator('input[type="file"]').first();
@@ -278,7 +282,7 @@ async function main() {
     });
     await waitForStatus(page, /Status: data loaded/i, 60000);
     mark('csv-loaded');
-    await holdUntil(13.5);
+    await holdUntil(15.0);
 
     await showCaption(AD_SCRIPT[3]);
     const selects = page.locator('select');
@@ -316,7 +320,7 @@ async function main() {
       throw new Error('Target / XGBoost selection did not take effect');
     }
     mark('four-models-shown-xgboost-selected');
-    await holdUntil(19.0);
+    await holdUntil(21.8);
 
     await showCaption(AD_SCRIPT[4]);
     const train = page.getByText('Train', { exact: true }).first();
@@ -324,7 +328,7 @@ async function main() {
     await train.click({ timeout: 15000 });
     await waitForStatus(page, /Status: xgboost trained/i, 180000);
     mark('trained');
-    await holdUntil(22.5);
+    await holdUntil(25.5);
 
     await showCaption(AD_SCRIPT[5]);
     const predict = page.getByText(/^Forecast \+16$/).first();
@@ -334,9 +338,13 @@ async function main() {
     await page.getByText(new RegExp(`Model="xgboost" Target="${TARGET_COLUMN}"`)).first().waitFor({ timeout: 15000 });
     if (await page.locator('canvas').count() === 0) throw new Error('Forecast chart was not rendered');
     mark('predicted-16');
-    await holdUntil(26.0);
+    await holdUntil(29.4);
 
     await showCaption(AD_SCRIPT[6]);
+    mark('free-browser');
+    await holdUntil(35.8);
+
+    await showCaption(AD_SCRIPT[7]);
     mark('privacy');
     await page.mouse.move(1200, 610, { steps: 28 });
     await holdUntil(VIDEO_SECONDS);
@@ -363,7 +371,7 @@ async function main() {
       console.log(`Narrated fallback saved: ${NO_AVATAR_FALLBACK}`);
     }
     const avatar = process.env.VIDEO_AVATAR_ENABLED === '1'
-      ? await overlayTalkingAvatar(VIDEO_FILE, VOICE_WAV, OUTPUT_DIR)
+      ? await overlayTalkingAvatar(VIDEO_FILE, VOICE_WAV, OUTPUT_DIR, narration.cues)
       : { enabled: false };
     writeFileSync(EVIDENCE_FILE, JSON.stringify({
       appUrl: APP_URL, capture: 'Playwright continuous browser recording',

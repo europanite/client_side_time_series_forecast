@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
+import { sampleAvatarMotion, validateMotionCues } from './motion.mjs';
 
 const SIZE = { width: 480, height: 600 };
 const canvas = document.querySelector('#avatar');
@@ -19,6 +20,7 @@ fill.position.set(-3, 2, -2); scene.add(fill);
 const camera = new THREE.PerspectiveCamera(32, SIZE.width / SIZE.height, 0.1, 100);
 let model = null;
 let samples = [];
+let motionCues = null;
 let recordingFrom = null;
 let lastTick = performance.now();
 const loader = new GLTFLoader();
@@ -26,28 +28,13 @@ loader.register((parser) => new VRMLoaderPlugin(parser));
 
 function clamp(v) { return Math.min(1, Math.max(0, v)); }
 
-/**
- * Lower both arms from the VRM T-pose into a relaxed standing pose.
- * This model's left arm extends along +X and its right arm along -X,
- * so the upper-arm Z rotation must be negative on the left and positive
- * on the right. Normalized humanoid bones work with VRM 1.0 here.
- */
-function applyRelaxedArmPose(vrm, elapsed = 0) {
-  const humanoid = vrm.humanoid;
-  if (!humanoid) return;
-
-  const rotate = (name, x, y, z) => {
-    const bone = humanoid.getNormalizedBoneNode(name);
-    if (bone) bone.rotation.set(x, y, z);
-  };
-
-  const sway = 0.025 * Math.sin(elapsed * 1.1);
-  rotate('leftUpperArm', 0.06, 0, -1.30 + sway);
-  rotate('rightUpperArm', 0.06, 0, 1.30 - sway);
-  rotate('leftLowerArm', -0.05, 0, -0.17);
-  rotate('rightLowerArm', -0.05, 0, 0.17);
-  rotate('leftHand', 0, 0, -0.03);
-  rotate('rightHand', 0, 0, 0.03);
+/** Apply a sampled expressive pose to VRM normalized humanoid bones. */
+function applyMotion(vrm, pose) {
+  if (!vrm.humanoid) return;
+  for (const [name, angles] of Object.entries(pose.bones)) {
+    const bone = vrm.humanoid.getNormalizedBoneNode(name);
+    if (bone) bone.rotation.set(...angles);
+  }
 }
 
 function animate(time) {
@@ -62,12 +49,14 @@ function animate(time) {
     model.expressionManager?.setValue('aa', clamp(amount * (0.76 + 0.1 * Math.sin(elapsed * 17))));
     model.expressionManager?.setValue('ih', clamp(amount * (0.12 + 0.12 * Math.sin(elapsed * 11 + 1))));
     model.expressionManager?.setValue('ou', clamp(amount * 0.12));
-    const cycle = (elapsed + 0.37) % 4.15;
-    const blinking = cycle < 0.21 ? Math.sin(Math.PI * cycle / 0.21) : 0;
-    model.expressionManager?.setValue('blink', blinking);
-    applyRelaxedArmPose(model, elapsed);
-    // A subtle idle turn keeps the character from looking perfectly static.
-    model.scene.rotation.y = 0.04 * Math.sin(elapsed * 0.9);
+    const pose = sampleAvatarMotion(elapsed, motionCues, voice);
+    model.expressionManager?.setValue('blink', pose.blink);
+    // VRM presets are model-dependent. Only set a smile when it exists.
+    if (model.expressionManager?.getExpression?.('happy')) {
+      model.expressionManager.setValue('happy', pose.smile);
+    }
+    applyMotion(model, pose);
+    model.scene.rotation.y = pose.rootYaw;
     model.update(delta);
   }
   renderer.render(scene, camera);
@@ -79,7 +68,7 @@ loader.load('/avatar.vrm', (gltf) => {
   model = gltf.userData.vrm;
   if (!model) { window.__avatarState.error = 'Not a recognized VRM model'; return; }
   scene.add(model.scene);
-  applyRelaxedArmPose(model);
+  applyMotion(model, sampleAvatarMotion(0));
   model.update(0);
   // Aim at upper-body / face using measured model bounds and head position.
   const bbox = new THREE.Box3().setFromObject(model.scene);
@@ -98,10 +87,11 @@ loader.load('/avatar.vrm', (gltf) => {
   window.__avatarState.ready = true;
 }, undefined, error => { window.__avatarState.error = String(error); });
 
-/** One real-time recording, 30 s, exactly aligned to the final narration WAV. */
-window.__recordAvatar = async (levels, duration = 30) => {
+/** One real-time recording, 40 s, exactly aligned to the final narration WAV. */
+window.__recordAvatar = async (levels, duration = 40, cues) => {
   if (!window.__avatarState.ready) throw new Error(window.__avatarState.error || 'VRM not ready');
   if (!Array.isArray(levels) || !levels.length) throw new Error('Expected sampled audio levels');
+  motionCues = validateMotionCues(cues, duration);
   const stream = canvas.captureStream(30);
   const codec = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
     .find(x => MediaRecorder.isTypeSupported(x));
@@ -120,6 +110,7 @@ window.__recordAvatar = async (levels, duration = 30) => {
   recorder.stop();
   await done;
   recordingFrom = null;
+  motionCues = null;
   stream.getTracks().forEach(track => track.stop());
   const blob = new Blob(parts, { type: codec });
   if (blob.size < 10000) throw new Error(`Empty VRM recording (${blob.size} bytes)`);

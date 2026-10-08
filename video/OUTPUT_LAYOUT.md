@@ -1,16 +1,21 @@
-# YouTube demo: 30 seconds
+# YouTube demo: 40 seconds
 
 The generated video uses **the real browser interface** (CSV, target, four model choices,
 XGBoost train and 16-step forecast), plus the lip-synced VRM avatar.
 
-## Storyboard
+## Storyboard (approximate elapsed seconds)
 
-- 0–3.5s: purpose — sales, stock prices, energy demand and other time series
-- 3.5–8s: load a CSV, no registration
-- 8–15.5s: show four real selectable models (XGBoost, LightGBM, VARMA, Chronos-2)
-- 15.5–20s: XGBoost training on the viewer's device
-- 20–26s: actual 16-point forecast
-- 26–30s: brand, clear URL, scannable QR code, no-upload message
+- 0–1.8s: silent UI opening (no subtitle, no narration)
+- 1.8–6.5s: question / hook
+- 6.5–11s: sales and stock-price forecasting
+- 11–15s: load a CSV, no registration
+- 15–21.8s: four real selectable models (XGBoost, LightGBM, VARMA, Chronos-2)
+- 21.8–25.5s: local XGBoost training
+- 25.5–29.4s: actual 16-point forecast
+- 29.4–35.8s: requested free/browser-only sentence
+- 35.8–40s: privacy, QR, and link to the tool
+
+Actual caption/audio/avatar cue starts track the recorded UI timing.
 
 The QR image at `video/avatar/forecast-site-qr.svg` contains
 `https://europanite.github.io/client_side_time_series_forecast/`.
@@ -54,6 +59,9 @@ docker compose -f docker-compose.yml -f docker-compose.video.yml \
 ```
 
 If your avatar file is unavailable, set `VIDEO_AVATAR_ENABLED=0` to make a voice-only video.
-Edit the seven voice/caption lines in `video/scripts/ad-script.mjs`.
+Edit the eight voice/caption lines in `video/scripts/ad-script.mjs`.
 `video/scripts/capture-continuous.mjs` displays them and
 `video/scripts/narration.mjs` sends the identical text to Piper.
+
+**Safety wording:** the narration uses a user-requested absolute safety
+claim; browser-only execution cannot by itself guarantee complete safety.

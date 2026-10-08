@@ -9,10 +9,12 @@ export const SCENES = Object.freeze([
 ]);
 
 export const FRAME_RATE = 30;
-export const VIDEO_SECONDS = 30;
+export const VIDEO_SECONDS = 40;
+export const STILLS_SECONDS = 30;
+export const OPENING_SILENCE_SECONDS = 1.8;
 export const FRAME_SIZE = Object.freeze({ width: 1280, height: 720 });
 
-/** Six 5.5-second scenes with 0.5-second dissolves and a 30-second trim. */
+/** Legacy screenshot mode: six 5.5-second scenes, a 30-second trim. */
 export const CLIP_SECONDS = 5.5;
 export const FADE_SECONDS = 0.5;
 
@@ -23,7 +25,7 @@ export function checkTimeline(scenes = SCENES) {
   }
   // 6*5.5 - 5*0.5 == 30.5, with 0.5 seconds trimmed to 30.0.
   const compositeSeconds = scenes.length * CLIP_SECONDS - (scenes.length - 1) * FADE_SECONDS;
-  if (compositeSeconds < VIDEO_SECONDS || compositeSeconds - VIDEO_SECONDS > 1) {
+  if (compositeSeconds < STILLS_SECONDS || compositeSeconds - STILLS_SECONDS > 1) {
     throw new Error(`Bad video timing: ${compositeSeconds} seconds`);
   }
 }
