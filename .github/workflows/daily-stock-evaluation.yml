@@ -1,4 +1,4 @@
-name: Daily fixed-group symmetric evaluation
+name: Daily group symmetric evaluation
 
 on:
   schedule:
@@ -28,17 +28,17 @@ jobs:
         run: |
           echo "LOCAL_UID=$(id -u)" >> "$GITHUB_ENV"
           echo "LOCAL_GID=$(id -g)" >> "$GITHUB_ENV"
-      - name: Download the same fixed-universe Japanese equity and market factors
+      - name: Download the Japanese equity and market factors
         run: |
           docker compose run --rm --build --entrypoint python backend \
             fetch_stock_groups.py --period 3y
-      - name: Test as-of isolation, cache invalidation, and fixed group invariants
+      - name: Test as-of isolation, cache invalidation, and group invariants
         run: |
           node --test scripts/stock-multivariate-core.test.mjs \
-            scripts/stock-fixed-groups.test.mjs \
+            scripts/stock-groups.test.mjs \
             scripts/stock-evaluation-cache.test.mjs \
             scripts/stock-evaluation-windows.test.mjs
-      - name: Reevaluate all fixed groups (recent 32 + long 256 sessions)
+      - name: Reevaluate all Groups (recent 32 + long 256 sessions)
         run: |
           docker compose -f docker-compose.stock.yml run --rm --build stock_benchmark
       - name: Commit README, metrics, forward-compatible cache and history

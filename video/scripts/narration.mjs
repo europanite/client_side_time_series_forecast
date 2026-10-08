@@ -7,24 +7,27 @@ import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
 import { probeDuration } from './render-continuous.mjs';
 import { VIDEO_SECONDS } from './timeline.mjs';
+import { videoPaths } from './video-paths.mjs';
 
 const exec = promisify(execFile);
 
 // Spoken English is intentionally accessible to a nontechnical audience.
 // Keep these keys identical to the page caption strings in capture-continuous.mjs.
 export const SPEECH_BY_CAPTION = Object.freeze({
-  'FREE to use. Right in your browser.': 'Forecasting is free, right in your browser.',
+  // Short, separated phrases give Piper time to pronounce the project name.
+  'client_side_time_series_forecast': 'Client side. Time series. Forecast.',
+  'Forecast sales, stock prices, and more.': 'Predict sales, stock prices, and more, in your browser.',
   'Open a CSV file. No account needed.': 'No account needed. Just open a C S V file.',
   '4 models. Choose the one you want.': 'Four models to choose from: X G Boost, Light G B M, Varma, and Chronos two.',
   'Here, XGBoost learns on your computer.': 'Here, X G Boost learns from past data on your computer.',
   'See the next 16 predictions.': 'See the next sixteen predicted values.',
-  'NO DATA UPLOAD. Your files stay on your computer.':
-    'Your data is never uploaded. It stays on your computer.',
+  'NO DATA UPLOAD. Scan to try it free.':
+    'No data upload. Scan to try it for free.',
 });
 
 export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
-  if (!Array.isArray(captions) || captions.length !== 6) {
-    throw new Error('Expected six recorded caption events');
+  if (!Array.isArray(captions) || captions.length !== 7) {
+    throw new Error('Expected seven recorded caption events');
   }
   if (!Number.isFinite(rawSeconds) || rawSeconds <= 0 ||
       !Number.isFinite(leadInSeconds) || leadInSeconds < 0) {
@@ -51,7 +54,7 @@ export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
 }
 
 export function buildAudioFilter(cues, durations) {
-  if (cues.length !== 6 || durations.length !== 6) throw new Error('Require six voice clips');
+  if (cues.length !== 7 || durations.length !== 7) throw new Error('Require seven voice clips');
   const steps = [];
   const tracks = [];
   for (let i = 0; i < cues.length; i++) {
@@ -127,10 +130,10 @@ export async function addNarrationToVideo(videoPath, captions, rawSeconds, leadI
     ]);
     if (stdout.trim() !== 'aac') throw new Error('Output MP4 has no AAC narration track');
     await replaceFileAcrossMounts(narrated, videoPath);
-    const soundtrack = join(outputDir, 'xgboost_narration.wav');
+    const soundtrack = videoPaths(outputDir).narration;
     await exec('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', videoPath,
       '-vn', '-c:a', 'pcm_s16le', soundtrack]);
-    console.log(`Narration: ${voice}; ${basename(soundtrack)}; six timed cues`);
+    console.log(`Narration: ${voice}; ${basename(soundtrack)}; seven timed cues`);
     return { enabled: true, voice, cues, audioFile: basename(soundtrack) };
   } finally {
     await rm(workdir, { recursive: true, force: true });

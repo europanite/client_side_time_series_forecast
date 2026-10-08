@@ -1,5 +1,6 @@
 import type { ForecastPoint, LoadedData } from "./core";
 import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
+import { forecastTimeLabels } from "./forecast-time";
 
 export type VarmaModel = {
   kind: "varma-experimental";
@@ -119,6 +120,7 @@ export function forecastVarmaNextN(
   const history = model.lastVectors.map((row) => [...row]);
   const points: ForecastPoint[] = [];
   let labelRows = data.rows.map((row) => ({ ...row }));
+  const labels = forecastTimeLabels(data.rows, data.datetimeKey, horizon);
 
   for (let step = 1; step <= horizon; step += 1) {
     const feature = buildLagFeature(history, history.length, model.lag);
@@ -145,7 +147,7 @@ export function forecastVarmaNextN(
       model.scales
     );
 
-    const label = buildNextLabel(labelRows, data.datetimeKey);
+    const label = labels[step - 1];
     const nextRow = buildPredictedRow(
       labelRows[labelRows.length - 1] ?? {},
       data,
@@ -360,33 +362,4 @@ function buildPredictedRow(
   });
 
   return next;
-}
-
-function buildNextLabel(rows: any[], datetimeKey: string | null): string {
-  if (!datetimeKey || !rows.length) return String(rows.length);
-
-  const lastRaw = rows[rows.length - 1]?.[datetimeKey];
-  const lastDate = parseDateLike(lastRaw);
-  if (!lastDate) return String(rows.length);
-
-  const next = new Date(lastDate.getTime());
-  next.setDate(next.getDate() + 1);
-  const yyyy = String(next.getFullYear()).padStart(4, "0");
-  const mm = String(next.getMonth() + 1).padStart(2, "0");
-  const dd = String(next.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function parseDateLike(value: unknown): Date | null {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    const excelEpoch = Date.UTC(1899, 11, 30);
-    return new Date(excelEpoch + value * 24 * 60 * 60 * 1000);
-  }
-
-  if (typeof value !== "string") return null;
-
-  const parsed = new Date(value.trim());
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }

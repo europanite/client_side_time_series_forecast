@@ -4,24 +4,32 @@
  * It fails closed if the real training/forecast steps do not succeed.
  */
 import { chromium } from 'playwright';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { renderContinuous } from './render-continuous.mjs';
 import { addNarrationToVideo } from './narration.mjs';
+import { overlayTalkingAvatar } from './avatar-overlay.mjs';
 import { verifyModelChoices } from './model-choices.mjs';
 import { FRAME_SIZE, VIDEO_SECONDS } from './timeline.mjs';
+import { videoPaths, archiveLegacyFiles } from './video-paths.mjs';
 
 const APP_URL = process.env.APP_URL || 'https://europanite.github.io/client_side_time_series_forecast/';
 const INPUT_CSV = resolve(process.env.INPUT_CSV || 'data/sample_data.csv');
 const OUTPUT_DIR = resolve(process.env.OUTPUT_DIR || 'video/output');
 const TARGET_COLUMN = process.env.TARGET_COLUMN || 'ITEM_A';
-const VIDEO_FILE = join(OUTPUT_DIR, 'xgboost_continuous_30s.mp4');
-const RAW_FILE = join(OUTPUT_DIR, 'xgboost_continuous_raw.webm');
-const EVIDENCE_FILE = join(OUTPUT_DIR, 'capture-continuous-evidence.json');
-const FAILED_SHOT = join(OUTPUT_DIR, 'capture-continuous-failed.png');
-const VOICE_WAV = join(OUTPUT_DIR, 'xgboost_narration.wav');
+const paths = videoPaths(OUTPUT_DIR);
+const VIDEO_FILE = paths.finalVideo;
+const RAW_FILE = paths.browserRecording;
+const EVIDENCE_FILE = paths.evidence;
+const FAILED_SHOT = paths.captureFailure;
+const VOICE_WAV = paths.narration;
+const AVATAR_RAW = paths.avatarRecording;
+const AVATAR_PREVIEW = paths.avatarPreview;
+const FINAL_PREVIEW = paths.finalPreview;
+const NO_AVATAR_FALLBACK = paths.narratedFallback;
+const PRODUCT_URL = 'https://europanite.github.io/client_side_time_series_forecast/';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -51,9 +59,43 @@ async function waitForStatus(page, regex, timeout = 120000) {
 }
 
 async function addRecordingOverlay(page) {
+  const qr = readFileSync(new URL('../avatar/forecast-site-qr.svg', import.meta.url), 'utf8');
+  const qrUri = `data:image/svg+xml;base64,${Buffer.from(qr).toString('base64')}`;
   // Captured video includes the *real page*. These two non-interactive layers
   // simply display explanatory captions and the real Playwright pointer position.
-  await page.evaluate(() => {
+  await page.evaluate(({qrUri, url}) => {
+    // Persistent, small branding panel; the real application remains visible at all times.
+    const brand = document.createElement('aside');
+    brand.id = '__demo_brand';
+    Object.assign(brand.style, {
+      position: 'fixed', top: '12px', right: '12px', width: '202px',
+      background: 'rgba(8, 18, 36, .89)', color: '#fff',
+      boxShadow: '0 4px 22px rgba(0, 0, 0, .5)', borderRadius: '13px',
+      padding: '10px 8px', boxSizing: 'border-box',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+      fontFamily: 'system-ui,sans-serif', textAlign: 'center',
+      pointerEvents: 'none', zIndex: '2147483643',
+    });
+    const name = document.createElement('strong');
+    name.textContent = 'client_side_time_series_forecast';
+    Object.assign(name.style, {
+      fontSize: '13px', lineHeight: '1.2', overflowWrap: 'anywhere',
+    });
+    const qr = document.createElement('img');
+    qr.src = qrUri;
+    qr.alt = 'QR code for the forecasting app';
+    Object.assign(qr.style, {
+      width: '138px', height: '138px', background: '#ffffff',
+      padding: '5px', borderRadius: '7px', boxSizing: 'border-box',
+    });
+    const address = document.createElement('span');
+    address.textContent = url.replace(/^https?:\/\//, '');
+    Object.assign(address.style, {
+      color: '#bfdbfe', fontSize: '11px', lineHeight: '1.3',
+      overflowWrap: 'anywhere',
+    });
+    brand.append(name, qr, address);
+    document.body.appendChild(brand);
     const caption = document.createElement('div');
     caption.id = '__demo_caption';
     Object.assign(caption.style, {
@@ -105,16 +147,18 @@ async function addRecordingOverlay(page) {
       cursor.style.width = '22px';
       cursor.style.height = '22px';
     });
-  });
+  }, {qrUri, url: PRODUCT_URL});
 }
 
 async function caption(page, text) {
   await page.locator('#__demo_caption').evaluate((node, value) => {
     node.textContent = value;
-    // Emphasize the free and no-upload promises without covering the real UI.
-    const highlight = value.startsWith('FREE') || value.startsWith('NO DATA UPLOAD') || value.startsWith('4 models');
+    // Large opening product-name caption, then regular short explanatory captions.
+    const title = value === 'client_side_time_series_forecast';
+    const highlight = title || value.startsWith('Forecast sales') ||
+      value.startsWith('NO DATA UPLOAD') || value.startsWith('4 models');
     node.style.color = highlight ? '#a7f3d0' : '#ffffff';
-    node.style.fontSize = highlight ? '31px' : '29px';
+    node.style.fontSize = title ? '35px' : (highlight ? '31px' : '29px');
     const panel = document.getElementById('__demo_models');
     if (panel && !value.startsWith('4 models')) panel.style.display = 'none';
   }, text);
@@ -158,8 +202,14 @@ async function aimAt(page, locator) {
 
 async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
+  mkdirSync(paths.intermediate, { recursive: true });
+  const moved = archiveLegacyFiles(OUTPUT_DIR);
+  if (moved) console.log(`Archived ${moved} previous debug files to intermediate/legacy/`);
   if (!existsSync(INPUT_CSV)) throw new Error(`Missing CSV: ${INPUT_CSV}`);
-  for (const file of [VIDEO_FILE, RAW_FILE, EVIDENCE_FILE, FAILED_SHOT, VOICE_WAV]) rmSync(file, { force: true });
+  if (process.env.VIDEO_AVATAR_ENABLED === '1' && process.env.VIDEO_VOICE_ENABLED === '0') {
+    throw new Error('A talking avatar needs Piper narration: set VIDEO_VOICE_ENABLED=1 (or VIDEO_AVATAR_ENABLED=0)');
+  }
+  for (const file of [VIDEO_FILE, RAW_FILE, EVIDENCE_FILE, FAILED_SHOT, VOICE_WAV, AVATAR_RAW, AVATAR_PREVIEW, FINAL_PREVIEW, NO_AVATAR_FALLBACK]) rmSync(file, { force: true });
   const workdir = mkdtempSync(join(tmpdir(), 'xgboost-continuous-'));
   let browser, context, page, video;
   const pageErrors = [];
@@ -192,6 +242,8 @@ async function main() {
     await waitForStatus(page, /Status: (sample )?data loaded/i, 45000);
     if (await page.locator('canvas').count() === 0) throw new Error('Actual chart canvas is missing');
     await addRecordingOverlay(page);
+    // Fail early rather than publishing a video with a missing QR image.
+    await page.locator('#__demo_brand img').evaluate((img) => img.decode());
     const started = performance.now();
     const leadInSeconds = (started - recordingBegins) / 1000;
     const showCaption = async (words) => {
@@ -208,9 +260,13 @@ async function main() {
       if (ms > 0) await page.waitForTimeout(ms);
     };
 
-    await showCaption('FREE to use. Right in your browser.');
+    await showCaption('client_side_time_series_forecast');
     mark('open');
-    await holdUntil(3.5);
+    await holdUntil(5.5);
+
+    await showCaption('Forecast sales, stock prices, and more.');
+    mark('purpose');
+    await holdUntil(9.5);
 
     await showCaption('Open a CSV file. No account needed.');
     const fileInput = page.locator('input[type="file"]').first();
@@ -220,7 +276,7 @@ async function main() {
     });
     await waitForStatus(page, /Status: data loaded/i, 60000);
     mark('csv-loaded');
-    await holdUntil(8.0);
+    await holdUntil(13.5);
 
     await showCaption('4 models. Choose the one you want.');
     const selects = page.locator('select');
@@ -258,7 +314,7 @@ async function main() {
       throw new Error('Target / XGBoost selection did not take effect');
     }
     mark('four-models-shown-xgboost-selected');
-    await holdUntil(15.5);
+    await holdUntil(19.0);
 
     await showCaption('Here, XGBoost learns on your computer.');
     const train = page.getByText('Train', { exact: true }).first();
@@ -266,7 +322,7 @@ async function main() {
     await train.click({ timeout: 15000 });
     await waitForStatus(page, /Status: xgboost trained/i, 180000);
     mark('trained');
-    await holdUntil(20.0);
+    await holdUntil(22.5);
 
     await showCaption('See the next 16 predictions.');
     const predict = page.getByText(/^Forecast \+16$/).first();
@@ -278,7 +334,7 @@ async function main() {
     mark('predicted-16');
     await holdUntil(26.0);
 
-    await showCaption('NO DATA UPLOAD. Your files stay on your computer.');
+    await showCaption('NO DATA UPLOAD. Scan to try it free.');
     mark('privacy');
     await page.mouse.move(1200, 610, { steps: 28 });
     await holdUntil(VIDEO_SECONDS);
@@ -293,19 +349,31 @@ async function main() {
     await browser.close();
     browser = null;
 
-    const result = await renderContinuous(RAW_FILE, VIDEO_FILE);
+    // Discard setup frames recorded before URL/QR were on the real UI.
+    const result = await renderContinuous(RAW_FILE, VIDEO_FILE, leadInSeconds);
     const narration = process.env.VIDEO_VOICE_ENABLED === '0'
       ? { enabled: false }
-      : await addNarrationToVideo(VIDEO_FILE, captionEvents, result.rawSeconds, leadInSeconds, OUTPUT_DIR);
+      : await addNarrationToVideo(VIDEO_FILE, captionEvents, result.contentSeconds, 0, OUTPUT_DIR);
+    // Preserve the narrated, verified browser recording even if VRM rendering fails.
+    // An avatar-stage failure must not destroy a successful XGBoost demo and voice-over.
+    if (process.env.VIDEO_AVATAR_ENABLED === '1') {
+      copyFileSync(VIDEO_FILE, NO_AVATAR_FALLBACK);
+      console.log(`Narrated fallback saved: ${NO_AVATAR_FALLBACK}`);
+    }
+    const avatar = process.env.VIDEO_AVATAR_ENABLED === '1'
+      ? await overlayTalkingAvatar(VIDEO_FILE, VOICE_WAV, OUTPUT_DIR)
+      : { enabled: false };
     writeFileSync(EVIDENCE_FILE, JSON.stringify({
       appUrl: APP_URL, capture: 'Playwright continuous browser recording',
       rawVideo: basename(RAW_FILE), outputVideo: basename(VIDEO_FILE),
       inputCsv: basename(INPUT_CSV), target: TARGET_COLUMN, model: 'xgboost',
       trained: true, forecastSteps: 16, outputSeconds: VIDEO_SECONDS,
-      rawSeconds: result.rawSeconds, playbackSpeed: result.playbackSpeed,
+      rawSeconds: result.rawSeconds, introTrimSeconds: leadInSeconds,
+      contentSeconds: result.contentSeconds, playbackSpeed: result.playbackSpeed,
       phases, captions: captionEvents, modelOptionsVerified: verifiedChoices,
       modelsDemonstratedAsSelectable: verifiedChoices.map(({value}) => value),
-      modelsActuallyTrained: ['xgboost'], leadInSeconds, narration, pageErrors,
+      modelsActuallyTrained: ['xgboost'], leadInSeconds, narration, avatar, pageErrors,
+      landingPage: PRODUCT_URL, qrCode: 'video/avatar/forecast-site-qr.svg',
     }, null, 2) + '\n');
     console.log(`SUCCESS: ${VIDEO_FILE}`);
   } catch (error) {
@@ -314,7 +382,10 @@ async function main() {
     }
     rmSync(VIDEO_FILE, { force: true });
     rmSync(EVIDENCE_FILE, { force: true });
-    rmSync(VOICE_WAV, { force: true });
+    if (existsSync(NO_AVATAR_FALLBACK)) {
+      console.error(`Avatar processing failed. Your complete spoken demo was preserved at: ${NO_AVATAR_FALLBACK}`);
+    }
+    // Keep WAV and avatar debugging artifacts for inspection.
     throw error;
   } finally {
     if (context) await context.close().catch(() => {});
