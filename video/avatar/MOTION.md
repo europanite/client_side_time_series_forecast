@@ -46,3 +46,5 @@ To check this character's actual result, rebuild the 40-second video and
 inspect the scene at ~16 s, 24 s and 28 s. Motion curves are deterministic
 and are tested with simple forward-kinematics probes. This is not a substitute
 for testing the original VRM 1.0 mesh, spring bones or self-occlusion.
+
+For optional learned-motion playback, see [../emage/README.md](../emage/README.md).

@@ -11,7 +11,7 @@ test('actual narration cue timings reach the avatar recorder', () => {
   assert.match(capture, /overlayTalkingAvatar\(VIDEO_FILE, VOICE_WAV, OUTPUT_DIR, narration\.cues\)/);
   assert.match(overlay, /window\.__recordAvatar\(wave, duration, cues\)/);
   assert.match(renderer, /validateMotionCues\(cues, duration\)/);
-  assert.match(renderer, /sampleAvatarMotion\(elapsed, motionCues, voice\)/);
+  assert.match(renderer, /sampleAvatarMotion\(elapsed, emageMotion \? null : motionCues, voice\)/);
 });
 
 test('new gestures replace per-frame static arm poses without altering green-screen geometry', () => {
@@ -32,4 +32,13 @@ test('avatar recording callback receives duration inside the browser context', (
   const browserCallback = runInNewContext(`(${match[1]})`, {window});
   const result = browserCallback({wave, duration: 40, cues});
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {wave, duration: 40, cues});
+});
+
+
+test('EMAGE opt-in is gated and does not change default procedural pipeline', () => {
+  assert.match(overlay, /VIDEO_MOTION_MODE === 'emage'/);
+  assert.match(overlay, /emageMotion\.audioSha256 !== actualHash/);
+  assert.match(overlay, /page\.evaluate\(motion => window\.__setEmageMotion\(motion\), emageMotion\)/);
+  assert.match(renderer, /sampleEmageMotion\(emageMotion, elapsed\)/);
+  assert.match(renderer, /let emageMotion = null/);
 });

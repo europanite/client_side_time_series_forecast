@@ -25,7 +25,7 @@
 
 ## 30-Second Demo
 
-[![▶ Watch the 30-second demo](https://img.youtube.com/vi/PX8yil3GX-c/hqdefault.jpg)](https://youtu.be/PX8yil3GX-c)
+[![▶ Watch the 30-second demo](https://img.youtube.com/vi/UuVjNsQo-PU/hqdefault.jpg)](https://youtu.be/UuVjNsQo-PU)
 
 ## PlayGround
 
