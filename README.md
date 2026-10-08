@@ -49,27 +49,6 @@ Everything happens **inside your browser**. There is no backend API and no data 
 
 ---
 
-## 30-second XGBoost video demo (real UI)
-
-Playwright **continuously records the actual browser interface**, including
-CSV upload, XGBoost training, mouse movement, and the 16-point forecast.
-FFmpeg converts the real WebM recording into a 30-second MP4 with short,
-plain-English captions and automatic English narration (local Piper TTS).
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.video.yml \
-  up --build --abort-on-container-exit --exit-code-from video
-```
-
-Outputs: `video/output/xgboost_continuous_30s.mp4` and the untouched full recording
-`video/output/xgboost_continuous_raw.webm`.
-The voice track is also saved as `video/output/xgboost_narration.wav`.
-Set `VIDEO_VOICE_ENABLED=0` to keep the final MP4 silent.
-To use the previous six-screenshot montage, set `VIDEO_CAPTURE_MODE=stills`.
-See [VIDEO.md](./VIDEO.md) for details and GitHub Actions instructions.
-
----
-
 ## Demo
 
 1. Open the GitHub Pages demo:  
