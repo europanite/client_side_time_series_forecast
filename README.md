@@ -25,11 +25,11 @@
 
 ## 30-Second Demo
 
-[![Watch the 30-second demo](https://img.youtube.com/vi/Egj6Oa3PwGY/hqdefault.jpg)](https://youtu.be/Egj6Oa3PwGY)
+[▶ Watch the 30-second demo](https://youtu.be/Egj6Oa3PwGY)
 
 ## PlayGround
 
-[![PlayGround]](https://europanite.github.io/client_side_time_series_forecast/)
+[▶ Open the browser-based forecasting app](https://europanite.github.io/client_side_time_series_forecast/)
 
 Browser-Based Client-Side Time-Series Forecast Tool. This tool is completely free and safe because it works on your web browser.
 
