@@ -1,0 +1,15 @@
+# Dedicated stock research pipeline; leaves docker-compose.test.yml unchanged.
+# docker compose -f docker-compose.stock.yml run --rm --build stock_benchmark
+services:
+  stock_benchmark:
+    profiles:
+      - benchmark
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    working_dir: /repo
+    volumes:
+      - ./:/repo
+      - /repo/frontend/app/node_modules
+    command: >-
+      sh -lc "npm --prefix frontend/app ci && node scripts/run-stock-multivariate.mjs"

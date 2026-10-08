@@ -1,0 +1,4 @@
+# Backend local Python artifacts
+.venv/
+__pycache__/
+*.py[cod]

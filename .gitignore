@@ -37,3 +37,7 @@ dist-ssr/
 build/
 frontend/app/dist/
 
+*.mp4
+*.mp3
+*.webm
+*.wav

@@ -1,0 +1,65 @@
+name: Daily fixed-group symmetric evaluation
+
+on:
+  schedule:
+    # JST 19:10, every calendar day; closed sessions repeat the last valid market data.
+    - cron: '10 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: stock-multivariate-evaluation
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # First 256-session WASM backfill is expensive; later runs reuse hashed as-of predictions.
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Use host owner for bind mounts
+        run: |
+          echo "LOCAL_UID=$(id -u)" >> "$GITHUB_ENV"
+          echo "LOCAL_GID=$(id -g)" >> "$GITHUB_ENV"
+      - name: Download the same fixed-universe Japanese equity and market factors
+        run: |
+          docker compose run --rm --build --entrypoint python backend \
+            fetch_stock_groups.py --period 3y
+      - name: Test as-of isolation, cache invalidation, and fixed group invariants
+        run: |
+          node --test scripts/stock-multivariate-core.test.mjs \
+            scripts/stock-fixed-groups.test.mjs \
+            scripts/stock-evaluation-cache.test.mjs \
+            scripts/stock-evaluation-windows.test.mjs
+      - name: Reevaluate all fixed groups (recent 32 + long 256 sessions)
+        run: |
+          docker compose -f docker-compose.stock.yml run --rm --build stock_benchmark
+      - name: Commit README, metrics, forward-compatible cache and history
+        id: commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md reports/stocks/multivariate.json \
+            reports/stocks/group-history.json \
+            data/sample_data.csv frontend/app/public/sample_data.csv
+          git add -f reports/stocks/forecast-cache.json
+          if git diff --cached --quiet; then
+            echo 'committed=false' >> "$GITHUB_OUTPUT"
+          else
+            git commit -m 'docs: daily symmetric stock forecast report [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+            echo 'committed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Update GitHub Pages with the latest lagged browser sample
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main

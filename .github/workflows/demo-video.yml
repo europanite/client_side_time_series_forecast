@@ -1,0 +1,40 @@
+name: Generate XGBoost demo video
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record real browser actions and render a 30-second demo
+        run: |
+          mkdir -p video/output
+          docker compose -f docker-compose.yml -f docker-compose.video.yml \
+            up --build --abort-on-container-exit --exit-code-from video
+
+      - name: Save MP4 and UI capture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xgboost-real-ui-30s
+          path: |
+            video/output/xgboost_continuous_30s.mp4
+            video/output/xgboost_continuous_raw.webm
+            video/output/xgboost_narration.wav
+            video/output/capture-continuous-evidence.json
+            video/output/capture-continuous-failed.png
+            video/output/xgboost_30s.mp4
+            video/output/capture-evidence.json
+            video/output/capture-failed.png
+          if-no-files-found: warn
+
+      - name: Clean up
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.video.yml down --remove-orphans

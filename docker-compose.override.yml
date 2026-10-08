@@ -1,0 +1,19 @@
+# Docker Compose automatically merges this file with docker-compose.yml.
+# Run from the repository root: docker compose run --rm --build backend
+services:
+  backend:
+    profiles:
+      - tools
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    working_dir: /repo/backend
+    # Avoid root-owned output files on a typical Linux host.
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
+    volumes:
+      - ./data:/repo/data
+    entrypoint: ["python", "fetch_stock_groups.py"]
+    command: ["--period", "3y"]
