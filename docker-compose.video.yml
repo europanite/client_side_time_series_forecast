@@ -16,7 +16,7 @@ services:
     environment:
       # Use the local, actual application by default (no external website needed).
       APP_URL: ${VIDEO_APP_URL:-http://frontend:5173/client_side_time_series_forecast/}
-      INPUT_CSV: /repo/data/sample_data_synthetic.csv
+      INPUT_CSV: /repo/data/sample_data.csv
       OUTPUT_DIR: /out
       TARGET_COLUMN: ${VIDEO_TARGET_COLUMN:-ITEM_A}
       VIDEO_CAPTURE_MODE: ${VIDEO_CAPTURE_MODE:-continuous}
@@ -24,7 +24,7 @@ services:
       VIDEO_VOICE: ${VIDEO_VOICE:-en_US-lessac-medium}
       VIDEO_VOICE_DIR: /voices
       VIDEO_AVATAR_ENABLED: ${VIDEO_AVATAR_ENABLED:-1}
-      VIDEO_AVATAR_PATH: /video/avatars-data/Avatar_D_01.vrm
+      VIDEO_AVATAR_PATH: /video/avatars-data/avatar.vrm
       # Avoid root-owned padlock icons in the host's file manager.
       VIDEO_HOST_UID: ${LOCAL_UID:-1000}
       VIDEO_HOST_GID: ${LOCAL_GID:-1000}

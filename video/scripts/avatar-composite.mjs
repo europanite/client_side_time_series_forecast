@@ -4,10 +4,7 @@ export function avatarCompositeArgs(video, avatar, output) {
     `[1:v]fps=${FRAME_RATE},format=rgba,` +
       'colorkey=0x00ff00:0.23:0.10,scale=320:400:flags=lanczos,format=yuva420p,' +
       `tpad=stop_mode=clone:stop_duration=1[character]`,
-    `[0:v][character]overlay=W-w-12:H-h-84:shortest=0:format=auto:repeatlast=1,` +
-      `drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:` +
-      `text='Avatar\\: pixiv VRoid Project':fontcolor=white:fontsize=14:` +
-      `box=1:boxcolor=black@0.75:boxborderw=5:x=W-tw-16:y=H-108,` +
+    `[0:v][character]overlay=12:H-h-84:shortest=0:format=auto:repeatlast=1,` +
       `format=yuv420p[video]`,
   ].join(';');
   return [ '-hide_banner','-loglevel','error','-y',

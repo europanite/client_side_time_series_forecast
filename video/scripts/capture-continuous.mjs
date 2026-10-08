@@ -12,6 +12,7 @@ import { renderContinuous } from './render-continuous.mjs';
 import { addNarrationToVideo } from './narration.mjs';
 import { overlayTalkingAvatar } from './avatar-overlay.mjs';
 import { verifyModelChoices } from './model-choices.mjs';
+import { AD_SCRIPT } from './ad-script.mjs';
 import { FRAME_SIZE, VIDEO_SECONDS } from './timeline.mjs';
 import { videoPaths, archiveLegacyFiles } from './video-paths.mjs';
 
@@ -68,7 +69,7 @@ async function addRecordingOverlay(page) {
     const brand = document.createElement('aside');
     brand.id = '__demo_brand';
     Object.assign(brand.style, {
-      position: 'fixed', top: '12px', right: '12px', width: '202px',
+      position: 'fixed', top: '12px', right: '12px', width: '270px',
       background: 'rgba(8, 18, 36, .89)', color: '#fff',
       boxShadow: '0 4px 22px rgba(0, 0, 0, .5)', borderRadius: '13px',
       padding: '10px 8px', boxSizing: 'border-box',
@@ -79,17 +80,18 @@ async function addRecordingOverlay(page) {
     const name = document.createElement('strong');
     name.textContent = 'client_side_time_series_forecast';
     Object.assign(name.style, {
-      fontSize: '13px', lineHeight: '1.2', overflowWrap: 'anywhere',
+      fontSize: '12px', lineHeight: '1.2', whiteSpace: 'nowrap',
+      overflowWrap: 'normal', letterSpacing: '-0.2px',
     });
     const qr = document.createElement('img');
     qr.src = qrUri;
     qr.alt = 'QR code for the forecasting app';
     Object.assign(qr.style, {
-      width: '138px', height: '138px', background: '#ffffff',
-      padding: '5px', borderRadius: '7px', boxSizing: 'border-box',
+      width: '170px', height: '170px', background: '#000000',
+      padding: '13px', borderRadius: '7px', boxSizing: 'border-box',
     });
     const address = document.createElement('span');
-    address.textContent = url.replace(/^https?:\/\//, '');
+    address.textContent = url;
     Object.assign(address.style, {
       color: '#bfdbfe', fontSize: '11px', lineHeight: '1.3',
       overflowWrap: 'anywhere',
@@ -151,17 +153,17 @@ async function addRecordingOverlay(page) {
 }
 
 async function caption(page, text) {
-  await page.locator('#__demo_caption').evaluate((node, value) => {
+  await page.locator('#__demo_caption').evaluate((node, {value, opening, purpose, models, closing}) => {
     node.textContent = value;
     // Large opening product-name caption, then regular short explanatory captions.
-    const title = value === 'client_side_time_series_forecast';
-    const highlight = title || value.startsWith('Forecast sales') ||
-      value.startsWith('NO DATA UPLOAD') || value.startsWith('4 models');
+    const title = value === opening;
+    const highlight = title || value === purpose || value === closing || value === models;
     node.style.color = highlight ? '#a7f3d0' : '#ffffff';
     node.style.fontSize = title ? '35px' : (highlight ? '31px' : '29px');
     const panel = document.getElementById('__demo_models');
-    if (panel && !value.startsWith('4 models')) panel.style.display = 'none';
-  }, text);
+    if (panel && value !== models) panel.style.display = 'none';
+  }, {value: text, opening: AD_SCRIPT[0], purpose: AD_SCRIPT[1],
+    models: AD_SCRIPT[3], closing: AD_SCRIPT[6]});
 }
 
 async function showModelChoices(page, options) {
@@ -260,15 +262,15 @@ async function main() {
       if (ms > 0) await page.waitForTimeout(ms);
     };
 
-    await showCaption('client_side_time_series_forecast');
+    await showCaption(AD_SCRIPT[0]);
     mark('open');
     await holdUntil(5.5);
 
-    await showCaption('Forecast sales, stock prices, and more.');
+    await showCaption(AD_SCRIPT[1]);
     mark('purpose');
     await holdUntil(9.5);
 
-    await showCaption('Open a CSV file. No account needed.');
+    await showCaption(AD_SCRIPT[2]);
     const fileInput = page.locator('input[type="file"]').first();
     await aimAt(page, fileInput);
     await fileInput.setInputFiles({
@@ -278,7 +280,7 @@ async function main() {
     mark('csv-loaded');
     await holdUntil(13.5);
 
-    await showCaption('4 models. Choose the one you want.');
+    await showCaption(AD_SCRIPT[3]);
     const selects = page.locator('select');
     if (await selects.count() < 2) throw new Error('Expected real target and model selectors');
     const target = selects.nth(0);
@@ -316,7 +318,7 @@ async function main() {
     mark('four-models-shown-xgboost-selected');
     await holdUntil(19.0);
 
-    await showCaption('Here, XGBoost learns on your computer.');
+    await showCaption(AD_SCRIPT[4]);
     const train = page.getByText('Train', { exact: true }).first();
     await aimAt(page, train);
     await train.click({ timeout: 15000 });
@@ -324,7 +326,7 @@ async function main() {
     mark('trained');
     await holdUntil(22.5);
 
-    await showCaption('See the next 16 predictions.');
+    await showCaption(AD_SCRIPT[5]);
     const predict = page.getByText(/^Forecast \+16$/).first();
     await aimAt(page, predict);
     await predict.click({ timeout: 15000 });
@@ -334,7 +336,7 @@ async function main() {
     mark('predicted-16');
     await holdUntil(26.0);
 
-    await showCaption('NO DATA UPLOAD. Scan to try it free.');
+    await showCaption(AD_SCRIPT[6]);
     mark('privacy');
     await page.mouse.move(1200, 610, { steps: 28 });
     await holdUntil(VIDEO_SECONDS);

@@ -38,11 +38,16 @@ test('green-screen keying preserves the UI and AAC voice track', {skip: !ffmpegP
       'stream=codec_type,codec_name','-of','csv=p=0',output], {encoding:'utf8'});
     assert.match(probe,/h264,video/);
     assert.match(probe,/aac,audio/);
-    // Pixel outside the human silhouette (bottom right) must show background UI black, not green.
+    // Pixel outside the silhouette on the right must show the original UI, not green.
     const pixel = ff('-ss','0.3','-i',output,'-vf','crop=2:2:950:240',
       '-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-');
     assert.equal(pixel.length,12);
     assert.ok(pixel[1] < 80, `Green screen leaked: RGB ${Array.from(pixel.slice(0,3))}`);
+    // The synthetic white avatar silhouette must be on the left.
+    const left = ff('-ss','0.3','-i',output,'-vf','crop=2:2:150:360',
+      '-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-');
+    assert.ok(left[0] > 170 && left[1] > 170 && left[2] > 170,
+      `Avatar not visible on left: RGB ${Array.from(left.slice(0,3))}`);
   } finally {
     rmSync(dir,{force:true,recursive:true});
   }
