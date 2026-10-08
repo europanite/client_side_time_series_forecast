@@ -21,7 +21,7 @@ jobs:
     # First 256-session WASM backfill is expensive; later runs reuse hashed as-of predictions.
     timeout-minutes: 340
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true
       - name: Use host owner for bind mounts
