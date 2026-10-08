@@ -2,8 +2,8 @@ name: Daily fixed-group symmetric evaluation
 
 on:
   schedule:
-    # JST 19:10, every calendar day; closed sessions repeat the last valid market data.
-    - cron: '10 10 * * *'
+    # JST 18:00, every calendar day; closed sessions repeat the last valid market data.
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 permissions:
