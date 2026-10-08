@@ -1,0 +1,321 @@
+{
+  "source": "Yahoo Finance via yfinance",
+  "cutoff_date": "2026-10-07",
+  "retrieved_at_utc": "2026-10-08T00:59:20.275961+00:00",
+  "first_date": "2023-10-10",
+  "last_date": "2026-10-07",
+  "sessions": 730,
+  "targets": [
+    "7203.T",
+    "7267.T",
+    "7270.T",
+    "8306.T",
+    "8316.T",
+    "8411.T",
+    "6758.T",
+    "6501.T",
+    "6702.T",
+    "9432.T",
+    "9433.T",
+    "8058.T",
+    "8031.T"
+  ],
+  "symbols": [
+    "7203.T",
+    "7267.T",
+    "7270.T",
+    "8306.T",
+    "8316.T",
+    "8411.T",
+    "6758.T",
+    "6501.T",
+    "6702.T",
+    "9432.T",
+    "9433.T",
+    "8058.T",
+    "8031.T",
+    "CL=F",
+    "JPY=X",
+    "^GSPC",
+    "^N225"
+  ],
+  "groups": {
+    "7203.T": {
+      "sector_peers": [
+        "7267.T",
+        "7270.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "7267.T",
+        "7270.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "7267.T": {
+      "sector_peers": [
+        "7203.T",
+        "7270.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "7203.T",
+        "7270.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "7270.T": {
+      "sector_peers": [
+        "7203.T",
+        "7267.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "7203.T",
+        "7267.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "8306.T": {
+      "sector_peers": [
+        "8316.T",
+        "8411.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "8316.T",
+        "8411.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "8316.T": {
+      "sector_peers": [
+        "8306.T",
+        "8411.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "8306.T",
+        "8411.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "8411.T": {
+      "sector_peers": [
+        "8306.T",
+        "8316.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "8306.T",
+        "8316.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "6758.T": {
+      "sector_peers": [
+        "6501.T",
+        "6702.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "6501.T",
+        "6702.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "6501.T": {
+      "sector_peers": [
+        "6758.T",
+        "6702.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "6758.T",
+        "6702.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "6702.T": {
+      "sector_peers": [
+        "6758.T",
+        "6501.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "6758.T",
+        "6501.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "9432.T": {
+      "sector_peers": [
+        "9433.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "9433.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "9433.T": {
+      "sector_peers": [
+        "9432.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "9432.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "8058.T": {
+      "sector_peers": [
+        "8031.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "8031.T",
+        "^N225",
+        "JPY=X"
+      ]
+    },
+    "8031.T": {
+      "sector_peers": [
+        "8058.T"
+      ],
+      "japan_market": [
+        "^N225",
+        "JPY=X"
+      ],
+      "global_macro": [
+        "^GSPC",
+        "CL=F",
+        "JPY=X"
+      ],
+      "sector_plus_market": [
+        "8058.T",
+        "^N225",
+        "JPY=X"
+      ]
+    }
+  },
+  "foreign_symbols": [
+    "CL=F",
+    "JPY=X",
+    "^GSPC"
+  ],
+  "failed_symbols": {
+    "^TOPX": "Missing Open or Close bars"
+  },
+  "panel_sha256": "26cbcd49d02fd355c0031978053594c26707e6207c161b13e16978b093e71b33",
+  "opens_sha256": "ab4cfade486ca5a200da98f0920632d67a4b1ef75619ffbb4e96785dd9f889cd",
+  "opens_file": "multivariate.opens.csv",
+  "note": "No predictive finding is inferred by downloading these series."
+}
