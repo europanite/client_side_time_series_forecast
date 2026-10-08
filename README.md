@@ -23,12 +23,17 @@
   <a href="./README.fr.md">🇫🇷 Français</a>
 </p>
 
+## 30-Second Demo
 
-!["web_ui"](./assets/images/web_ui.png)
+[![Watch the 30-second demo](https://img.youtube.com/vi/Egj6Oa3PwGY/hqdefault.jpg)](https://youtu.be/Egj6Oa3PwGY)
 
-[PlayGround](https://europanite.github.io/client_side_time_series_forecast/)
+## PlayGround
 
-A Client-Side Browser-Based Time-Series Forecast Playground powered by [XGBoost](https://xgboost.readthedocs.io/en/stable/), [LightGBM](https://lightgbm.readthedocs.io/), an experimental VARMA-style model, and [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
+[![PlayGround]](https://europanite.github.io/client_side_time_series_forecast/)
+
+Browser-Based Client-Side Time-Series Forecast Tool. This tool is completely free and safe because it works on your browser.
+
+You can choose [XGBoost](https://xgboost.readthedocs.io/en/stable/), [LightGBM](https://lightgbm.readthedocs.io/), an experimental VARMA-style model, and [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
 ---
 

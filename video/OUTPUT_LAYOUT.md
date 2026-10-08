@@ -18,19 +18,13 @@ Its content is stored locally and does not depend on a QR API.
 
 ## Local avatar model
 
-Copy or move your existing model to `video/avatar/Avatar_D_01.vrm`:
+Copy or move your existing model to `video/avatar/avatar.vrm`:
 
 ```bash
 mkdir -p video/avatar
-mv video/assets/Avatar_D_01.vrm video/avatar/Avatar_D_01.vrm
-# Or copy the VRM you originally downloaded into video/avatar/Avatar_D_01.vrm
+mv video/assets/avatar.vrm video/avatar/avatar.vrm
+# Or copy the VRM you originally downloaded into video/avatar/avatar.vrm
 ```
-
-The local `video/avatar/.gitignore` excludes VRM files. The video build's
-`.dockerignore` additionally excludes models from the Docker image.
-Only a read-only bind mount makes it available to the video service.
-The included pixiv VRoid Project model must not be redistributed; check its
-video-use conditions and retain the required credit.
 
 ## Output files
 
@@ -60,5 +54,6 @@ docker compose -f docker-compose.yml -f docker-compose.video.yml \
 ```
 
 If your avatar file is unavailable, set `VIDEO_AVATAR_ENABLED=0` to make a voice-only video.
-The 30s voice script is `video/scripts/narration.mjs` and page overlays are in
-`video/scripts/capture-continuous.mjs`.
+Edit the seven voice/caption lines in `video/scripts/ad-script.mjs`.
+`video/scripts/capture-continuous.mjs` displays them and
+`video/scripts/narration.mjs` sends the identical text to Piper.

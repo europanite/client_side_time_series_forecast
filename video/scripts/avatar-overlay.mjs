@@ -14,7 +14,7 @@ import { probeDuration } from './render-continuous.mjs';
 import { avatarCompositeArgs, assertAvatarOutputDuration } from './avatar-composite.mjs';
 
 const exec = promisify(execFile);
-const AVATAR_PATH = resolve(process.env.VIDEO_AVATAR_PATH || '/video/avatars-data/Avatar_D_01.vrm');
+const AVATAR_PATH = resolve(process.env.VIDEO_AVATAR_PATH || '/video/avatars-data/avatar.vrm');
 const ASSET_ROOT = resolve('avatar');
 const AVATAR_W = 480, AVATAR_H = 600;
 
@@ -38,11 +38,8 @@ async function startPrivateServer() {
 
 
 export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
-  if (!existsSync(AVATAR_PATH)) throw new Error(`VRM missing: ${AVATAR_PATH}. Copy your file to video/avatar/Avatar_D_01.vrm`);
+  if (!existsSync(AVATAR_PATH)) throw new Error(`VRM missing: ${AVATAR_PATH}. Copy your file to video/avatar/avatar.vrm`);
   const meta = inspectVRM(AVATAR_PATH);
-  if (!meta.authors.includes('pixiv VRoid Project')) {
-    throw new Error('This pipeline credits pixiv VRoid Project; another avatar needs matching credit text');
-  }
   console.log(`Avatar VRM: ${meta.name}; authors=${meta.authors.join(', ')}; redistribution=${meta.redistributionAllowed}`);
   if (!existsSync(join(ASSET_ROOT,'bundle.js'))) throw new Error('Avatar browser bundle missing; rebuild video Docker image');
   if (!existsSync(narrationWav)) throw new Error(`Narration missing: ${narrationWav}`);
@@ -96,7 +93,7 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
     console.log(`Avatar composite saved: ${videoPath}`);
     return {enabled:true,source:basename(AVATAR_PATH),render:basename(raw),
       rawPreview:basename(debug),preview:basename(compositePreview),
-      creator:'pixiv VRoid Project', metadata:meta, synchronization:'Piper WAV per-frame RMS'};
+      creator:meta.authors.join(', '), metadata:meta, synchronization:'Piper WAV per-frame RMS'};
   } finally {
     if (browser) await browser.close().catch(()=>{});
     await new Promise(resolve => server.close(resolve));

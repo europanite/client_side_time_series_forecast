@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildContinuousFfmpegArgs } from './render-continuous.mjs';
 import { buildVoiceCues, SPEECH_BY_CAPTION } from './narration.mjs';
+import { AD_SCRIPT } from './ad-script.mjs';
 
 const capture = readFileSync(new URL('./capture-continuous.mjs', import.meta.url), 'utf8');
 
@@ -15,15 +16,14 @@ test('final recording trims setup frames so the persistent URL and QR start at f
   assert.doesNotMatch(capture, /__demo_intro|__demo_outro/);
 });
 
-test('project name is spoken before the purpose and no dedicated title card is displayed', () => {
-  const keys = Object.keys(SPEECH_BY_CAPTION);
-  assert.equal(keys[0], 'client_side_time_series_forecast');
-  assert.match(SPEECH_BY_CAPTION[keys[0]], /Client side\. Time series\. Forecast\./);
-  assert.match(keys[1], /Forecast sales/);
-  assert.ok(capture.indexOf("await showCaption('client_side_time_series_forecast')") <
-            capture.indexOf("await showCaption('Forecast sales, stock prices, and more.')"));
-  const raw = keys.map((text,i) => ({text, elapsedSeconds:[0,5.5,9.5,13.5,19,22.5,26][i]}));
+test('hook precedes purpose, and voice aligns with on-screen captions', () => {
+  assert.deepEqual(Object.keys(SPEECH_BY_CAPTION), AD_SCRIPT);
+  assert.match(AD_SCRIPT[0], /browser forecast/);
+  assert.ok(capture.indexOf('await showCaption(AD_SCRIPT[0])') <
+            capture.indexOf('await showCaption(AD_SCRIPT[1])'));
+  const raw = AD_SCRIPT.map((text,i) => ({text, elapsedSeconds:[0,5.5,9.5,13.5,19,22.5,26][i]}));
   const cues = buildVoiceCues(raw, 30, 0);
-  assert.ok(cues[0].slotSeconds >= 5.3);
   assert.equal(cues.length, 7);
+  assert.ok(cues[0].slotSeconds >= 5.3);
+  cues.forEach(cue => assert.equal(cue.speech, cue.caption));
 });

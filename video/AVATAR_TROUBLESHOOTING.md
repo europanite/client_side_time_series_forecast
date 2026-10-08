@@ -25,7 +25,7 @@ VIDEO_AVATAR_ENABLED=0 docker compose -f docker-compose.yml \
   --exit-code-from video
 ```
 
-For an avatar run, the VRM must be readable at `video/assets/Avatar_D_01.vrm`.
+For an avatar run, the VRM must be readable at `video/assets/avatar.vrm`.
 **Do not commit or redistribute the VRM model.** Its included metadata requires
 credit and forbids redistribution. Completed videos display the creator credit.
 

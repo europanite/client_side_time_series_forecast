@@ -7,23 +7,16 @@ import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
 import { probeDuration } from './render-continuous.mjs';
 import { VIDEO_SECONDS } from './timeline.mjs';
+import { AD_SCRIPT } from './ad-script.mjs';
 import { videoPaths } from './video-paths.mjs';
 
 const exec = promisify(execFile);
 
-// Spoken English is intentionally accessible to a nontechnical audience.
-// Keep these keys identical to the page caption strings in capture-continuous.mjs.
-export const SPEECH_BY_CAPTION = Object.freeze({
-  // Short, separated phrases give Piper time to pronounce the project name.
-  'client_side_time_series_forecast': 'Client side. Time series. Forecast.',
-  'Forecast sales, stock prices, and more.': 'Predict sales, stock prices, and more, in your browser.',
-  'Open a CSV file. No account needed.': 'No account needed. Just open a C S V file.',
-  '4 models. Choose the one you want.': 'Four models to choose from: X G Boost, Light G B M, Varma, and Chronos two.',
-  'Here, XGBoost learns on your computer.': 'Here, X G Boost learns from past data on your computer.',
-  'See the next 16 predictions.': 'See the next sixteen predicted values.',
-  'NO DATA UPLOAD. Scan to try it free.':
-    'No data upload. Scan to try it for free.',
-});
+// The captured caption and Piper speech are the same exact string.
+// Retain this mapping for callers that inspect the seven narration cues.
+export const SPEECH_BY_CAPTION = Object.freeze(
+  Object.fromEntries(AD_SCRIPT.map(line => [line, line])),
+);
 
 export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
   if (!Array.isArray(captions) || captions.length !== 7) {
@@ -33,14 +26,14 @@ export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
       !Number.isFinite(leadInSeconds) || leadInSeconds < 0) {
     throw new Error('Invalid recording timing');
   }
-  const starts = captions.map(({ text, elapsedSeconds }) => {
-    if (!Object.hasOwn(SPEECH_BY_CAPTION, text)) throw new Error(`Unexpected caption: ${text}`);
+  const starts = captions.map(({ text, elapsedSeconds }, index) => {
+    if (text !== AD_SCRIPT[index]) throw new Error(`Unexpected or out-of-order caption ${index + 1}: ${text}`);
     if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) throw new Error('Invalid caption time');
     return ((leadInSeconds + elapsedSeconds) / rawSeconds) * VIDEO_SECONDS;
   });
   const cues = captions.map(({ text }, i) => ({
     caption: text,
-    speech: SPEECH_BY_CAPTION[text],
+    speech: text,
     startSeconds: Math.max(0, Math.min(VIDEO_SECONDS - 0.15, starts[i])),
     // Reserve 100 ms of silence before the next caption if possible.
     slotSeconds: Math.max(0.2, (i + 1 < starts.length ? starts[i + 1] : VIDEO_SECONDS) - starts[i] - 0.10),
