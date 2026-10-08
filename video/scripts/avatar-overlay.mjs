@@ -11,6 +11,7 @@ import { chromium } from 'playwright';
 import { envelopeFromNarration } from './avatar-audio.mjs';
 import { inspectVRM } from './verify-vrm.mjs';
 import { probeDuration } from './render-continuous.mjs';
+import { VIDEO_SECONDS } from './timeline.mjs';
 import { avatarCompositeArgs, assertAvatarOutputDuration } from './avatar-composite.mjs';
 
 const exec = promisify(execFile);
@@ -37,7 +38,7 @@ async function startPrivateServer() {
 }
 
 
-export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
+export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir, cues) {
   if (!existsSync(AVATAR_PATH)) throw new Error(`VRM missing: ${AVATAR_PATH}. Copy your file to video/avatar/avatar.vrm`);
   const meta = inspectVRM(AVATAR_PATH);
   console.log(`Avatar VRM: ${meta.name}; authors=${meta.authors.join(', ')}; redistribution=${meta.redistributionAllowed}`);
@@ -65,12 +66,12 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
     if (!state.ready) throw new Error(`VRM load failed: ${state.error}`);
     await page.screenshot({path:debug});
     const downloadEvent = page.waitForEvent('download',{timeout:100000});
-    const recording = page.evaluate((wave) => window.__recordAvatar(wave,30),levels);
+    const recording = page.evaluate(({wave, duration, cues}) => window.__recordAvatar(wave, duration, cues), {wave:levels, duration: VIDEO_SECONDS, cues});
     const download = await downloadEvent;
     await recording;
     await download.saveAs(raw);
     const duration = await probeDuration(raw);
-    if (duration < 28 || duration > 33) throw new Error(`Unreasonable avatar recording length: ${duration}`);
+    if (duration < VIDEO_SECONDS - 2 || duration > VIDEO_SECONDS + 3) throw new Error(`Unreasonable avatar recording length: ${duration}`);
     console.log(`VRM rendered: ${basename(raw)} (${duration.toFixed(2)} s)`);
     try {
       await exec('ffmpeg',avatarCompositeArgs(videoPath,raw,stage),{maxBuffer:8*1024*1024});
@@ -82,7 +83,7 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
     console.log(`Avatar composite encoded: ${basename(stage)} (${outSeconds.toFixed(3)}s)`);
     // Show the *actual* completed composite, not the intentional green-screen raw preview.
     try {
-      await exec('ffmpeg', ['-hide_banner','-loglevel','error','-y','-ss','23',
+      await exec('ffmpeg', ['-hide_banner','-loglevel','error','-y','-ss',String(VIDEO_SECONDS - 7),
         '-i',stage,'-frames:v','1','-update','1',compositePreview],
       {maxBuffer:2*1024*1024});
     } catch (error) {
@@ -93,7 +94,7 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir) {
     console.log(`Avatar composite saved: ${videoPath}`);
     return {enabled:true,source:basename(AVATAR_PATH),render:basename(raw),
       rawPreview:basename(debug),preview:basename(compositePreview),
-      creator:meta.authors.join(', '), metadata:meta, synchronization:'Piper WAV per-frame RMS'};
+      creator:meta.authors.join(', '), metadata:meta, synchronization:'Piper WAV per-frame RMS + exact eight scene cue times'};
   } finally {
     if (browser) await browser.close().catch(()=>{});
     await new Promise(resolve => server.close(resolve));

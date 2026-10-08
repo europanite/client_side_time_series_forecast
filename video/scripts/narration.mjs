@@ -13,14 +13,14 @@ import { videoPaths } from './video-paths.mjs';
 const exec = promisify(execFile);
 
 // The captured caption and Piper speech are the same exact string.
-// Retain this mapping for callers that inspect the seven narration cues.
+// Retain this mapping for callers that inspect the eight narration cues.
 export const SPEECH_BY_CAPTION = Object.freeze(
   Object.fromEntries(AD_SCRIPT.map(line => [line, line])),
 );
 
 export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
-  if (!Array.isArray(captions) || captions.length !== 7) {
-    throw new Error('Expected seven recorded caption events');
+  if (!Array.isArray(captions) || captions.length !== AD_SCRIPT.length) {
+    throw new Error('Expected eight recorded caption events');
   }
   if (!Number.isFinite(rawSeconds) || rawSeconds <= 0 ||
       !Number.isFinite(leadInSeconds) || leadInSeconds < 0) {
@@ -47,7 +47,7 @@ export function buildVoiceCues(captions, rawSeconds, leadInSeconds = 0) {
 }
 
 export function buildAudioFilter(cues, durations) {
-  if (cues.length !== 7 || durations.length !== 7) throw new Error('Require seven voice clips');
+  if (cues.length !== AD_SCRIPT.length || durations.length !== AD_SCRIPT.length) throw new Error('Require eight voice clips');
   const steps = [];
   const tracks = [];
   for (let i = 0; i < cues.length; i++) {
@@ -126,7 +126,7 @@ export async function addNarrationToVideo(videoPath, captions, rawSeconds, leadI
     const soundtrack = videoPaths(outputDir).narration;
     await exec('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', videoPath,
       '-vn', '-c:a', 'pcm_s16le', soundtrack]);
-    console.log(`Narration: ${voice}; ${basename(soundtrack)}; seven timed cues`);
+    console.log(`Narration: ${voice}; ${basename(soundtrack)}; eight timed cues`);
     return { enabled: true, voice, cues, audioFile: basename(soundtrack) };
   } finally {
     await rm(workdir, { recursive: true, force: true });

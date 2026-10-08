@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
-import { SCENES, VIDEO_SECONDS, FRAME_RATE, CLIP_SECONDS, FADE_SECONDS, checkTimeline } from './timeline.mjs';
+import { SCENES, STILLS_SECONDS, FRAME_RATE, CLIP_SECONDS, FADE_SECONDS, checkTimeline } from './timeline.mjs';
 
 const FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
 
@@ -33,7 +33,7 @@ export function buildFfmpegArgs(shots, outputFile) {
     combined = name;
   }
   args.push('-filter_complex', filters.join(';'), '-map', '[end]',
-    '-t', String(VIDEO_SECONDS), '-an', '-c:v', 'libx264', '-preset', 'medium',
+    '-t', String(STILLS_SECONDS), '-an', '-c:v', 'libx264', '-preset', 'medium',
     '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(FRAME_RATE),
     '-movflags', '+faststart', outputFile);
   return args;

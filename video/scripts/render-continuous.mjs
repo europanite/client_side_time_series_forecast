@@ -1,4 +1,4 @@
-/** Convert one UNINTERRUPTED real Playwright WebM recording to a 30-second MP4. */
+/** Convert one UNINTERRUPTED real Playwright WebM recording to a 40-second MP4. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { FRAME_RATE, FRAME_SIZE, VIDEO_SECONDS } from './timeline.mjs';
@@ -48,7 +48,7 @@ export function buildContinuousFfmpegArgs(rawPath, outputPath, rawSeconds, intro
     throw new Error('Invalid introduction trim duration');
   }
   const contentSeconds = rawSeconds - introTrimSeconds;
-  // If training takes longer than the planned 30 seconds, accelerate playback
+  // If training takes longer than the planned 40 seconds, accelerate playback
   // rather than cutting out the real training/forecast UI interaction.
   const ptsScale = VIDEO_SECONDS / contentSeconds;
   const vf = [

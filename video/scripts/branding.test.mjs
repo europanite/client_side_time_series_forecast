@@ -27,9 +27,9 @@ test('real UI remains visible; a permanent panel displays product name, URL and 
   assert.match(capture, /padding: '13px'/);
 });
 
-test('seven captions are exactly the seven spoken advertising lines', () => {
-  assert.equal(AD_SCRIPT.length, 7);
-  assert.equal(Object.keys(SPEECH_BY_CAPTION).length, 7);
+test('eight captions are exactly the eight spoken advertising lines', () => {
+  assert.equal(AD_SCRIPT.length, 8);
+  assert.equal(Object.keys(SPEECH_BY_CAPTION).length, 8);
   AD_SCRIPT.forEach((line, i) => {
     assert.equal(SPEECH_BY_CAPTION[line], line);
     assert.ok(capture.includes(`showCaption(AD_SCRIPT[${i}])`));

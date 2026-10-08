@@ -39,25 +39,25 @@ class PiperVoice:
   return {manifest, outputDir, run};
 }
 
-test('seven narration cues generate seven WAV clips without network or a real Piper model',
+test('eight narration cues generate eight WAV clips without network or a real Piper model',
   {skip: !pythonAvailable}, () => {
     const dir = mkdtempSync(join(tmpdir(), 'piper-cues-'));
     try {
       const {manifest, outputDir, run} = setup(dir);
-      writeFileSync(manifest, JSON.stringify(Array.from({length: 7}, (_, i) => ({
+      writeFileSync(manifest, JSON.stringify(Array.from({length: 8}, (_, i) => ({
         caption: `scene${i + 1}`, speech: `Narration ${i + 1}`,
       }))));
       const log = run();
-      assert.match(log, /Piper narration 7\/7:/);
+      assert.match(log, /Piper narration 8\/8:/);
       assert.deepEqual(readdirSync(outputDir).sort(),
-        Array.from({length: 7}, (_, i) => `narration_0${i}.wav`));
+        Array.from({length: 8}, (_, i) => `narration_0${i}.wav`));
     } finally {
       rmSync(dir, {force: true, recursive: true});
     }
   });
 
 
-test('narration cue count is not hardcoded to seven', {skip: !pythonAvailable}, () => {
+test('narration cue count is not hardcoded to eight', {skip: !pythonAvailable}, () => {
   const dir = mkdtempSync(join(tmpdir(), 'piper-eight-cues-'));
   try {
     const {manifest, outputDir, run} = setup(dir);
