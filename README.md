@@ -31,7 +31,7 @@
 
 [![PlayGround]](https://europanite.github.io/client_side_time_series_forecast/)
 
-Browser-Based Client-Side Time-Series Forecast Tool. This tool is completely free and safe because it works on your browser.
+Browser-Based Client-Side Time-Series Forecast Tool. This tool is completely free and safe because it works on your web browser.
 
 You can choose [XGBoost](https://xgboost.readthedocs.io/en/stable/), [LightGBM](https://lightgbm.readthedocs.io/), an experimental VARMA-style model, and [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
