@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
 import { sampleAvatarMotion, validateMotionCues } from './motion.mjs';
+import { sampleEmageMotion, validateEmageMotion } from './emage-motion.mjs';
 
 const SIZE = { width: 480, height: 600 };
 const canvas = document.querySelector('#avatar');
@@ -21,6 +22,7 @@ const camera = new THREE.PerspectiveCamera(32, SIZE.width / SIZE.height, 0.1, 10
 let model = null;
 let samples = [];
 let motionCues = null;
+let emageMotion = null;
 let recordingFrom = null;
 let lastTick = performance.now();
 const loader = new GLTFLoader();
@@ -49,7 +51,17 @@ function animate(time) {
     model.expressionManager?.setValue('aa', clamp(amount * (0.76 + 0.1 * Math.sin(elapsed * 17))));
     model.expressionManager?.setValue('ih', clamp(amount * (0.12 + 0.12 * Math.sin(elapsed * 11 + 1))));
     model.expressionManager?.setValue('ou', clamp(amount * 0.12));
+    // Keep the authored presentation gestures and enrich them with EMAGE.
+    // This preserves visible arm motion even when the retargeted data is subtle.
     const pose = sampleAvatarMotion(elapsed, motionCues, voice);
+    if (emageMotion && recordingFrom !== null) {
+      for (const [name, offset] of Object.entries(sampleEmageMotion(emageMotion, elapsed))) {
+        const angles = pose.bones[name];
+        if (!angles) continue;
+        const gain = /Arm/.test(name) ? 0.95 : 0.75;
+        for (let axis = 0; axis < 3; axis++) angles[axis] += offset[axis] * gain;
+      }
+    }
     model.expressionManager?.setValue('blink', pose.blink);
     // VRM presets are model-dependent. Only set a smile when it exists.
     if (model.expressionManager?.getExpression?.('happy')) {
@@ -87,6 +99,11 @@ loader.load('/avatar.vrm', (gltf) => {
   window.__avatarState.ready = true;
 }, undefined, error => { window.__avatarState.error = String(error); });
 
+/** Inject checked, per-frame motion from the separate EMAGE conversion stage. */
+window.__setEmageMotion = (motion) => {
+  emageMotion = validateEmageMotion(motion, 40);
+};
+
 /** One real-time recording, 40 s, exactly aligned to the final narration WAV. */
 window.__recordAvatar = async (levels, duration = 40, cues) => {
   if (!window.__avatarState.ready) throw new Error(window.__avatarState.error || 'VRM not ready');
@@ -111,6 +128,7 @@ window.__recordAvatar = async (levels, duration = 40, cues) => {
   await done;
   recordingFrom = null;
   motionCues = null;
+  emageMotion = null;
   stream.getTracks().forEach(track => track.stop());
   const blob = new Blob(parts, { type: codec });
   if (blob.size < 10000) throw new Error(`Empty VRM recording (${blob.size} bytes)`);

@@ -1,11 +1,11 @@
 /** Record the actual .vrm on a local Chromium green-screen canvas, then overlay on real UI. */
 import { createServer } from 'node:http';
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { rm, rename } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { videoPaths } from './video-paths.mjs';
 import { execFile } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { chromium } from 'playwright';
 import { envelopeFromNarration } from './avatar-audio.mjs';
@@ -13,6 +13,7 @@ import { inspectVRM } from './verify-vrm.mjs';
 import { probeDuration } from './render-continuous.mjs';
 import { VIDEO_SECONDS } from './timeline.mjs';
 import { avatarCompositeArgs, assertAvatarOutputDuration } from './avatar-composite.mjs';
+import { validateEmageMotion } from '../avatar/emage-motion.mjs';
 
 const exec = promisify(execFile);
 const AVATAR_PATH = resolve(process.env.VIDEO_AVATAR_PATH || '/video/avatars-data/avatar.vrm');
@@ -45,6 +46,19 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir, c
   if (!existsSync(join(ASSET_ROOT,'bundle.js'))) throw new Error('Avatar browser bundle missing; rebuild video Docker image');
   if (!existsSync(narrationWav)) throw new Error(`Narration missing: ${narrationWav}`);
   const levels = envelopeFromNarration(narrationWav);
+  let emageMotion = null;
+  if (process.env.VIDEO_MOTION_MODE === 'emage') {
+    const motionPath = resolve(outputDir, 'intermediate/emage-vrm-motion.json');
+    if (!existsSync(motionPath)) throw new Error(`EMAGE motion missing: ${motionPath}. Run emage-convert first.`);
+    emageMotion = validateEmageMotion(JSON.parse(readFileSync(motionPath, 'utf8')), VIDEO_SECONDS);
+    const actualHash = createHash('sha256').update(readFileSync(narrationWav)).digest('hex');
+    if (emageMotion.audioSha256 !== actualHash) {
+      throw new Error('EMAGE motion was generated for a different narration WAV. Re-run EMAGE inference and conversion.');
+    }
+    console.log(`External EMAGE motion: ${emageMotion.bones.head.length} frames`);
+  } else if (process.env.VIDEO_MOTION_MODE && process.env.VIDEO_MOTION_MODE !== 'procedural') {
+    throw new Error(`Unknown VIDEO_MOTION_MODE: ${process.env.VIDEO_MOTION_MODE}`);
+  }
   const paths = videoPaths(outputDir);
   const raw = paths.avatarRecording;
   const debug = paths.avatarPreview; // raw green-screen diagnostic
@@ -65,6 +79,7 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir, c
     const state = await page.evaluate(() => window.__avatarState);
     if (!state.ready) throw new Error(`VRM load failed: ${state.error}`);
     await page.screenshot({path:debug});
+    if (emageMotion) await page.evaluate(motion => window.__setEmageMotion(motion), emageMotion);
     const downloadEvent = page.waitForEvent('download',{timeout:100000});
     const recording = page.evaluate(({wave, duration, cues}) => window.__recordAvatar(wave, duration, cues), {wave:levels, duration: VIDEO_SECONDS, cues});
     const download = await downloadEvent;
@@ -94,7 +109,7 @@ export async function overlayTalkingAvatar(videoPath, narrationWav, outputDir, c
     console.log(`Avatar composite saved: ${videoPath}`);
     return {enabled:true,source:basename(AVATAR_PATH),render:basename(raw),
       rawPreview:basename(debug),preview:basename(compositePreview),
-      creator:meta.authors.join(', '), metadata:meta, synchronization:'Piper WAV per-frame RMS + exact eight scene cue times'};
+      creator:meta.authors.join(', '), metadata:meta, synchronization: emageMotion ? 'Piper WAV + experimental EMAGE motion' : 'Piper WAV per-frame RMS + exact eight scene cue times'};
   } finally {
     if (browser) await browser.close().catch(()=>{});
     await new Promise(resolve => server.close(resolve));
