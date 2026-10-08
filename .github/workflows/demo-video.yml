@@ -13,7 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The example VRM forbids redistribution and is not committed to Git.
+      # CI stays avatar-free unless you explicitly provision licensed assets.
       - name: Record real browser actions and render a 30-second demo
+        env:
+          VIDEO_AVATAR_ENABLED: '0'
         run: |
           mkdir -p video/output
           docker compose -f docker-compose.yml -f docker-compose.video.yml \
@@ -25,14 +29,16 @@ jobs:
         with:
           name: xgboost-real-ui-30s
           path: |
-            video/output/xgboost_continuous_30s.mp4
-            video/output/xgboost_continuous_raw.webm
-            video/output/xgboost_narration.wav
-            video/output/capture-continuous-evidence.json
-            video/output/capture-continuous-failed.png
-            video/output/xgboost_30s.mp4
-            video/output/capture-evidence.json
-            video/output/capture-failed.png
+            video/output/video.mp4
+            video/output/preview.png
+            video/output/evidence.json
+            video/output/intermediate/browser-ui.webm
+            video/output/intermediate/narration.wav
+            video/output/intermediate/narrated-without-avatar.mp4
+            video/output/intermediate/avatar-green-screen.webm
+            video/output/intermediate/avatar-green-screen-preview.png
+            video/output/intermediate/capture-failure.png
+            video/output/video_30s.mp4
           if-no-files-found: warn
 
       - name: Clean up

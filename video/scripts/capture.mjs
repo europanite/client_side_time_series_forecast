@@ -11,7 +11,7 @@ const APP_URL = process.env.APP_URL || 'https://europanite.github.io/client_side
 const INPUT_CSV = resolve(process.env.INPUT_CSV || 'data/sample_data.csv');
 const OUTPUT_DIR = resolve(process.env.OUTPUT_DIR || 'video/output');
 const TARGET_COLUMN = process.env.TARGET_COLUMN || 'ITEM_A';
-const outputFile = join(OUTPUT_DIR, 'xgboost_30s.mp4');
+const outputFile = join(OUTPUT_DIR, 'video_30s.mp4');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

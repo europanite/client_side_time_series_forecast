@@ -216,7 +216,7 @@ export default function App() {
             `Model="chronos" Target="${target}" → next ${DEFAULT_FORECAST_HORIZON} pretrained forecasts:`,
             ...result.points.map((point, index) =>
               [
-                `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`,
+                `${point.label}: ${point.value.toFixed(4)}`,
                 `(p10=${result.lower[index].toFixed(4)},`,
                 `p90=${result.upper[index].toFixed(4)})`,
               ].join(" ")
@@ -243,8 +243,7 @@ export default function App() {
         [
           `Model="${modelKind}" Target="${target}" → next ${DEFAULT_FORECAST_HORIZON} forecasts:`,
           ...points.map(
-            (point, index) =>
-              `+${index + 1} ${point.label}: ${point.value.toFixed(4)}`
+            (point) => `${point.label}: ${point.value.toFixed(4)}`
           ),
         ].join("\n")
       );

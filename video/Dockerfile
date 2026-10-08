@@ -13,6 +13,9 @@ ENV PATH="/opt/piper-venv/bin:${PATH}"
 WORKDIR /video
 COPY package.json ./
 RUN npm install --no-audit --no-fund
+# VRM rendering is bundled once; all JS modules are local during recording.
+COPY avatar ./avatar
+RUN npm install --prefix avatar --no-audit --no-fund && npm run --prefix avatar build
 COPY scripts ./scripts
 
 CMD ["node", "scripts/run.mjs"]

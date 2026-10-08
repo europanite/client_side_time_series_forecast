@@ -1,6 +1,7 @@
 import { parseCSV, parseXLSX, buildFeatures } from "./api";
 import { initXGBoostCtor } from "./xgb";
 import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
+import { forecastTimeLabels } from "./forecast-time";
 
 export type LoadedData = {
   rows: any[];
@@ -108,11 +109,12 @@ export function forecastNextN(
   const rows = data.rows.map((row) => ({ ...row }));
   const period = inferSeasonalPeriod(rows, data.datetimeKey);
   const points: ForecastPoint[] = [];
+  const labels = forecastTimeLabels(data.rows, data.datetimeKey, horizon);
 
   for (let step = 1; step <= horizon; step += 1) {
     const rawPrediction = predictNext({ ...data, rows }, targetKey, model);
     const value = seasonalizePrediction(rows, targetKey, rawPrediction, period);
-    const label = buildNextLabel(rows, data.datetimeKey);
+    const label = labels[step - 1];
     const nextRow = buildNextRow(rows, data, targetKey, value, label, period);
 
     rows.push(nextRow);
@@ -226,19 +228,4 @@ function inferSeasonalPeriod(rows: any[], datetimeKey: string | null): number {
   if (medianDays >= 25 && medianDays <= 35) return 12;
 
   return Math.min(12, Math.max(2, Math.round(7 / medianDays)) || 7);
-}
-
-function buildNextLabel(rows: any[], datetimeKey: string | null): string {
-  if (!datetimeKey || !rows.length) return String(rows.length);
-
-  const lastRaw = rows[rows.length - 1]?.[datetimeKey];
-  const lastDate = parseDateLike(lastRaw);
-  if (!lastDate) return String(rows.length);
-
-  const next = new Date(lastDate.getTime());
-  next.setDate(next.getDate() + 1);
-  const yyyy = String(next.getFullYear()).padStart(4, "0");
-  const mm = String(next.getMonth() + 1).padStart(2, "0");
-  const dd = String(next.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
 }

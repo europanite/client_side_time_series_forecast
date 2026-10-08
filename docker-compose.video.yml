@@ -23,9 +23,16 @@ services:
       VIDEO_VOICE_ENABLED: ${VIDEO_VOICE_ENABLED:-1}
       VIDEO_VOICE: ${VIDEO_VOICE:-en_US-lessac-medium}
       VIDEO_VOICE_DIR: /voices
+      VIDEO_AVATAR_ENABLED: ${VIDEO_AVATAR_ENABLED:-1}
+      VIDEO_AVATAR_PATH: /video/avatars-data/Avatar_D_01.vrm
+      # Avoid root-owned padlock icons in the host's file manager.
+      VIDEO_HOST_UID: ${LOCAL_UID:-1000}
+      VIDEO_HOST_GID: ${LOCAL_GID:-1000}
     volumes:
       - ./data:/repo/data:ro
       - ./video/output:/out
+      # Keep source/bundle from the Docker image. Mount ONLY the local avatar files separately.
+      - ./video/avatar:/video/avatars-data:ro
       - piper_voices:/voices
     # Chromium's shared memory is much smaller with Docker's default setting.
     shm_size: 1gb

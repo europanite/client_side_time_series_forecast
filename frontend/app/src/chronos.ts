@@ -1,5 +1,6 @@
 import * as ort from "onnxruntime-web";
 import { DEFAULT_FORECAST_HORIZON } from "./forecast-config";
+import { forecastTimeLabels } from "./forecast-time";
 
 const MODEL_URL =
   "https://huggingface.co/OpenSTEF/chronos-2-small-onnx/resolve/main/chronos-2-small_int8.onnx";
@@ -343,7 +344,7 @@ export type ChronosForecastResult = {
 };
 
 export async function forecastChronosNext16(
-  data: { rows: any[] },
+  data: { rows: any[]; datetimeKey?: string | null },
   targetKey: string,
   onProgress?: (message: string) => void
 ): Promise<ChronosForecastResult> {
@@ -356,10 +357,12 @@ export async function forecastChronosNext16(
     onProgress
   );
 
+  const labels = forecastTimeLabels(data.rows, data.datetimeKey, result.median.length);
+
   return {
     points: result.median.map(
       (value: number, index: number) => ({
-        label: `t+${index + 1}`,
+        label: labels[index],
         value,
       })
     ),
