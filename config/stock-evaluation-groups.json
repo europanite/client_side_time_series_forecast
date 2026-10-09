@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Pre-registered Japanese equity multivariate benchmark panels. Do not auto-select or substitute groups.",
+  "groups": [
+    {"id": "automakers", "label": "Automakers", "target": "7203.T", "factors": ["7267.T", "7270.T", "^N225", "JPY=X"]},
+    {"id": "banks", "label": "Banks", "target": "8306.T", "factors": ["8316.T", "8411.T", "^N225", "JPY=X"]},
+    {"id": "electronics", "label": "Electronics", "target": "6758.T", "factors": ["6501.T", "6702.T", "^N225", "JPY=X"]},
+    {"id": "telecom", "label": "Telecom", "target": "9432.T", "factors": ["9433.T", "^N225", "JPY=X"]},
+    {"id": "trading_houses", "label": "Trading houses", "target": "8058.T", "factors": ["8031.T", "^N225", "JPY=X"]}
+  ]
+}
