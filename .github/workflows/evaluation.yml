@@ -35,12 +35,42 @@ jobs:
       - name: Test as-of isolation, cache invalidation, and group invariants
         run: |
           node --test scripts/stock-multivariate-core.test.mjs \
-            scripts/stock-groups.test.mjs \
+            scripts/stock-fixed-groups.test.mjs \
             scripts/stock-evaluation-cache.test.mjs \
-            scripts/stock-evaluation-windows.test.mjs
+            scripts/stock-evaluation-windows.test.mjs \
+            scripts/publish-stock-evaluation.test.mjs
       - name: Reevaluate all Groups (recent 32 + long 256 sessions)
         run: |
           docker compose -f docker-compose.stock.yml run --rm --build stock_benchmark
+      # Preserve the completed results even if publishing to main fails later.
+      - name: Back up evaluated reports before publishing
+        if: success()
+        continue-on-error: true
+        uses: actions/upload-artifact@v6
+        with:
+          name: stock-evaluation-${{ github.run_id }}
+          path: |
+            reports/stocks/forecast-cache.json
+            reports/stocks/group-history.json
+            reports/stocks/multivariate.json
+          if-no-files-found: error
+          retention-days: 7
+      # A failed long backfill may still contain valid checkpointed predictions.
+      # Do not publish partial official reports. This step does not mask failure.
+      - name: Preserve partial forecast cache on failure
+        if: failure()
+        run: |
+          if [ ! -f reports/stocks/forecast-cache.json ]; then
+            echo 'No cache checkpoint was created'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f reports/stocks/forecast-cache.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: checkpoint partial stock evaluation [skip ci]'
+            bash scripts/publish-stock-evaluation.sh
+          fi
       - name: Commit README, metrics, forward-compatible cache and history
         id: commit
         run: |
@@ -54,8 +84,7 @@ jobs:
             echo 'committed=false' >> "$GITHUB_OUTPUT"
           else
             git commit -m 'docs: daily symmetric stock forecast report [skip ci]'
-            git pull --rebase origin main
-            git push origin HEAD:main
+            bash scripts/publish-stock-evaluation.sh
             echo 'committed=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Update GitHub Pages with the latest lagged browser sample
