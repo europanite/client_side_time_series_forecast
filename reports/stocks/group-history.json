@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "records": [
+    {
+      "marketDate": "2026-10-09",
+      "configSha256": "dd6f956e125afc49a9dffb8aa541b2899391693db485a9b7200d387ce5c88c97",
+      "test": {
+        "from": "2026-08-24",
+        "to": "2026-10-09",
+        "days": 32
+      },
+      "longTest": {
+        "from": "2025-09-19",
+        "to": "2026-10-09",
+        "days": 256
+      },
+      "groups": [
+        {
+          "id": "automakers",
+          "target": "7203.T",
+          "models": {
+            "ridge": {
+              "recent": {
+                "soloMAPE": 1.0653297960798378,
+                "multiMAPE": 1.125927687613175,
+                "improvementPct": -5.688181421032534,
+                "soloPnlJpy": -38361.003299997654,
+                "multiPnlJpy": -9146.54553749715
+              },
+              "long": {
+                "soloMAPE": 1.4768153838702742,
+                "multiMAPE": 1.5189743424361852,
+                "improvementPct": -2.854720977745062,
+                "soloPnlJpy": -93534.08912498644,
+                "multiPnlJpy": -238852.77858748625
+              }
+            },
+            "xgboost": {
+              "recent": {
+                "soloMAPE": 1.4129758650419562,
+                "multiMAPE": 1.3437971162844387,
+                "improvementPct": 4.895961103727931,
+                "soloPnlJpy": 5682.907800002489,
+                "multiPnlJpy": 17705.112150003086
+              },
+              "long": {
+                "soloMAPE": 1.6656283690046694,
+                "multiMAPE": 1.6396055766363282,
+                "improvementPct": 1.56234084700968,
+                "soloPnlJpy": -270455.28208748426,
+                "multiPnlJpy": -292549.4382499849
+              }
+            },
+            "lightgbm": {
+              "recent": {
+                "soloMAPE": 1.3285941151512355,
+                "multiMAPE": 1.344525744815441,
+                "improvementPct": -1.1991344446375285,
+                "soloPnlJpy": -20986.648462497396,
+                "multiPnlJpy": -59313.30847499764
+              },
+              "long": {
+                "soloMAPE": 1.5959889121591377,
+                "multiMAPE": 1.5903548985058782,
+                "improvementPct": 0.3530108267254528,
+                "soloPnlJpy": -286153.0355249841,
+                "multiPnlJpy": -331025.5009624873
+              }
+            }
+          }
+        },
+        {
+          "id": "banks",
+          "target": "8306.T",
+          "models": {
+            "ridge": {
+              "recent": {
+                "soloMAPE": 1.4739604107029463,
+                "multiMAPE": 1.521578062163351,
+                "improvementPct": -3.230592295060042,
+                "soloPnlJpy": 41030.21935000422,
+                "multiPnlJpy": 22426.01360000379
+              },
+              "long": {
+                "soloMAPE": 1.627622693316532,
+                "multiMAPE": 1.6587556938879362,
+                "improvementPct": -1.9127897822538875,
+                "soloPnlJpy": 39805.457800020115,
+                "multiPnlJpy": -152406.5434124804
+              }
+            },
+            "xgboost": {
+              "recent": {
+                "soloMAPE": 1.6592775039623202,
+                "multiMAPE": 1.6050920626350658,
+                "improvementPct": 3.265604529553423,
+                "soloPnlJpy": -7771.394649996655,
+                "multiPnlJpy": 31970.01600000332
+              },
+              "long": {
+                "soloMAPE": 1.7712907509616267,
+                "multiMAPE": 1.8025417897756908,
+                "improvementPct": -1.7643088124915662,
+                "soloPnlJpy": -226949.21172498062,
+                "multiPnlJpy": -106719.07279997738
+              }
+            },
+            "lightgbm": {
+              "recent": {
+                "soloMAPE": 1.4944317682680506,
+                "multiMAPE": 1.5496996636770746,
+                "improvementPct": -3.698254853955363,
+                "soloPnlJpy": 17785.612100003287,
+                "multiPnlJpy": 30479.61560000386
+              },
+              "long": {
+                "soloMAPE": 1.7596755615249597,
+                "multiMAPE": 1.7671185461963266,
+                "improvementPct": -0.42297482752540194,
+                "soloPnlJpy": -164696.69152497838,
+                "multiPnlJpy": -21876.352099977084
+              }
+            }
+          }
+        },
+        {
+          "id": "electronics",
+          "target": "6758.T",
+          "models": {
+            "ridge": {
+              "recent": {
+                "soloMAPE": 1.2724638088854208,
+                "multiMAPE": 1.347153898531131,
+                "improvementPct": -5.8697221189444315,
+                "soloPnlJpy": 12255.604900000617,
+                "multiPnlJpy": -7097.799149998929
+              },
+              "long": {
+                "soloMAPE": 1.6862185439472537,
+                "multiMAPE": 1.7038662983001263,
+                "improvementPct": -1.0465876096677817,
+                "soloPnlJpy": -237826.05080804066,
+                "multiPnlJpy": -307345.34946040984
+              }
+            },
+            "xgboost": {
+              "recent": {
+                "soloMAPE": 1.4515173232018774,
+                "multiMAPE": 1.5046357260402963,
+                "improvementPct": -3.6595087078427513,
+                "soloPnlJpy": -24144.801099998527,
+                "multiPnlJpy": -60458.61054999835
+              },
+              "long": {
+                "soloMAPE": 1.8296655981414125,
+                "multiMAPE": 1.9068504178172958,
+                "improvementPct": -4.218520573064732,
+                "soloPnlJpy": -314020.4328384942,
+                "multiPnlJpy": -335041.0759695289
+              }
+            },
+            "lightgbm": {
+              "recent": {
+                "soloMAPE": 1.3408511690695473,
+                "multiMAPE": 1.407786143305433,
+                "improvementPct": -4.99197642362752,
+                "soloPnlJpy": -64287.21229999885,
+                "multiPnlJpy": -54680.60834999813
+              },
+              "long": {
+                "soloMAPE": 1.7923019941451168,
+                "multiMAPE": 1.8009950872925038,
+                "improvementPct": -0.4850239064501771,
+                "soloPnlJpy": -237866.20898849145,
+                "multiPnlJpy": -248289.23820803408
+              }
+            }
+          }
+        },
+        {
+          "id": "telecom",
+          "target": "9432.T",
+          "models": {
+            "ridge": {
+              "recent": {
+                "soloMAPE": 0.8998281903769152,
+                "multiMAPE": 0.8735095031408476,
+                "improvementPct": 2.924856935749409,
+                "soloPnlJpy": 8766.709067622898,
+                "multiPnlJpy": 51856.950295843184
+              },
+              "long": {
+                "soloMAPE": 0.8087040020522777,
+                "multiMAPE": 0.8164722614023611,
+                "improvementPct": -0.9605812918409784,
+                "soloPnlJpy": -109434.99173413531,
+                "multiPnlJpy": -146632.61241033964
+              }
+            },
+            "xgboost": {
+              "recent": {
+                "soloMAPE": 1.0403518112902128,
+                "multiMAPE": 1.0081027740748307,
+                "improvementPct": 3.0998203555187565,
+                "soloPnlJpy": 26965.925031313207,
+                "multiPnlJpy": 7520.587043330073
+              },
+              "long": {
+                "soloMAPE": 0.8507558435999586,
+                "multiMAPE": 0.8728133761620592,
+                "improvementPct": -2.592698331493626,
+                "soloPnlJpy": -128703.214423195,
+                "multiPnlJpy": -135498.00557505433
+              }
+            },
+            "lightgbm": {
+              "recent": {
+                "soloMAPE": 0.9735271096141757,
+                "multiMAPE": 0.9149509623154908,
+                "improvementPct": 6.016899449456481,
+                "soloPnlJpy": 31385.05412835558,
+                "multiPnlJpy": 11377.025727245258
+              },
+              "long": {
+                "soloMAPE": 0.8346417273556799,
+                "multiMAPE": 0.8527384148070305,
+                "improvementPct": -2.168198264983068,
+                "soloPnlJpy": -51111.12262272043,
+                "multiPnlJpy": -103633.19687455113
+              }
+            }
+          }
+        },
+        {
+          "id": "trading_houses",
+          "target": "8058.T",
+          "models": {
+            "ridge": {
+              "recent": {
+                "soloMAPE": 1.3898410945340511,
+                "multiMAPE": 1.405165175816078,
+                "improvementPct": -1.1025779380314127,
+                "soloPnlJpy": -14475.100724998629,
+                "multiPnlJpy": -48322.9057749979
+              },
+              "long": {
+                "soloMAPE": 1.6283198234970715,
+                "multiMAPE": 1.6271162667718337,
+                "improvementPct": 0.07391402523448942,
+                "soloPnlJpy": -199218.3115749827,
+                "multiPnlJpy": -231268.21934998268
+              }
+            },
+            "xgboost": {
+              "recent": {
+                "soloMAPE": 1.498716016298129,
+                "multiMAPE": 1.5292780019721974,
+                "improvementPct": -2.039211254281348,
+                "soloPnlJpy": -12041.19869999867,
+                "multiPnlJpy": -19063.396549997036
+              },
+              "long": {
+                "soloMAPE": 1.7749765481146977,
+                "multiMAPE": 1.6865843044556819,
+                "improvementPct": 4.979910509403762,
+                "soloPnlJpy": -74918.97144998051,
+                "multiPnlJpy": -151980.30357498513
+              }
+            },
+            "lightgbm": {
+              "recent": {
+                "soloMAPE": 1.3375091550905474,
+                "multiMAPE": 1.4276400637616986,
+                "improvementPct": -6.738713400810292,
+                "soloPnlJpy": -5331.395049997722,
+                "multiPnlJpy": -23128.69997499825
+              },
+              "long": {
+                "soloMAPE": 1.6903078891483285,
+                "multiMAPE": 1.663736173892249,
+                "improvementPct": 1.5720044511812525,
+                "soloPnlJpy": -122944.89637498418,
+                "multiPnlJpy": -164221.8060999841
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
